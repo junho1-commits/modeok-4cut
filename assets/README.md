@@ -4,7 +4,7 @@
 
 촬영 후 꾸미기 화면에서 **학교 캐릭터** 탭을 선택하세요. 입체 지비츠, 3D 애니메이션, 봉제인형을 누르면 두 캐릭터가 한 쌍으로 사진에 붙습니다. 드래그 이동, 회전 손잡이, 크기 조절을 사용할 수 있습니다.
 
-**문구 글꼴**에서 주아체, 기랑해랑체, 연성체, 나눔손글씨 펜을 고를 수 있습니다. 선택한 문구와 이후 추가하는 문구에 적용됩니다. 글꼴과 캐릭터 준비가 끝난 뒤 30초 편집 시간이 시작됩니다.
+**문구 글꼴**은 13종(주아·기랑해랑·연성·나눔손글씨 펜·개구쟁이·동글·큐트폰트·싱글데이·나눔손글씨 붓·도현·검은고딕·베이글팻·송명)에서 고를 수 있습니다. 선택한 문구와 이후 추가하는 문구에 적용됩니다. 글꼴과 캐릭터 준비가 끝난 뒤 30초 편집 시간이 시작됩니다.
 
 프로그램을 옮길 때 `index.html`과 `assets` 폴더를 함께 복사하세요. 인터넷 연결이나 Windows 글꼴 설치는 필요하지 않습니다. 변경한 실행 방식은 앱을 닫은 뒤 `실행.bat`으로 다시 열어 적용합니다.
 
@@ -21,6 +21,6 @@
 - `fonts/fonts.css`: 인터넷 없이 사용하는 글꼴 묶음
 - `qr/qrcode.min.js`: QR 코드 생성 라이브러리 (qrcode-generator 1.4.4, MIT — `qr/LICENSE-qrcode-generator.txt`)
 
-글꼴 배포 출처: https://github.com/google/fonts/tree/main/ofl (jua, kiranghaerang, yeonsung, nanumpenscript).
+글꼴 배포 출처: https://github.com/google/fonts/tree/main/ofl (jua, kiranghaerang, yeonsung, nanumpenscript, gaegu, dongle, cutefont, singleday, nanumbrushscript, dohyeon, blackhansans, bagelfatone, songmyung). 글꼴을 추가하려면 ttf 와 OFL.txt 를 `fonts/` 에 넣고 `scripts/build-assets.cjs` 의 fonts 배열과 `index.html` 의 STICKER_FONTS/FONT_NAMES 에 같은 순서로 추가한 뒤 `node scripts/build-assets.cjs` 를 실행합니다.
 
 에셋 파일을 교체한 개발자는 `node scripts/build-assets.cjs`로 묶음을 갱신할 수 있습니다. `node scripts/check-app.cjs`는 DOM과 캔버스를 모의한 기능 검사이며, 실제 브라우저 화면/인쇄 검사를 대체하지 않습니다.

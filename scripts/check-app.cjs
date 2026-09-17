@@ -40,7 +40,8 @@ const run = code=>vm.runInContext(code,sandbox);
 (async()=>{
   await run('assetsReady');
   assert.equal(run('characterImages.size'), 9);
-  assert.equal(run('FONT_NAMES.length'), 4);
+  assert.equal(run('FONT_NAMES.length'), 13);
+  assert.equal(run('STICKER_FONTS.length'), run('FONT_NAMES.length'), 'Font name list must match font list');
   await run('goDeco()');
   assert.equal(elements.get('decoTimer').textContent,'꾸미기 60초');
   run("addSticker(['i','jibbitz','입체 지비츠'])");
@@ -61,7 +62,7 @@ const run = code=>vm.runInContext(code,sandbox);
   for(const key of '1234')documentEvents.keydown({key,target:{closest:()=>null}});
   assert.ok(document.body.classList.contains('secret-unlocked'));
   assert.ok(elements.get('idle').classList.contains('active'),'Secret code must not start capture');
-  for(const file of ['Jua-Regular.ttf','KirangHaerang-Regular.ttf','YeonSung-Regular.ttf','NanumPenScript-Regular.ttf']) {
+  for(const file of fs.readdirSync(path.join(root,'assets/fonts')).filter(f=>f.endsWith('.ttf'))) {
     assert.equal(fs.readFileSync(path.join(root,'assets/fonts',file)).readUInt32BE(0),65536,'Valid TrueType signature');
   }
   console.log('PASS: asset loading, character drawing, rotation/size/hit testing, Korean font selection, typing guard, 60-second completion, secret code, font file signatures.');

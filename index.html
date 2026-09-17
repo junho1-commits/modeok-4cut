@@ -489,13 +489,27 @@ let customFrame = store.get('booth.customFrame');
 
 var stream = null, shots = [], picked = [], shotCount = 4, selectedFrame = FRAMES[0], resultDataUrl = null, autoBackTimer = null, decoTimer = null;
 var stickers = [], selStk = -1;
+// scripts/build-assets.cjs 의 fonts 배열과 같은 순서
 const STICKER_FONTS = [
   '"BoothJua", "Malgun Gothic", sans-serif',
   '"BoothKirang", "Malgun Gothic", sans-serif',
   '"BoothYeon", "Malgun Gothic", sans-serif',
   '"BoothPen", "Malgun Gothic", cursive',
+  '"BoothGaegu", "Malgun Gothic", cursive',
+  '"BoothDongle", "Malgun Gothic", sans-serif',
+  '"BoothCute", "Malgun Gothic", sans-serif',
+  '"BoothSingle", "Malgun Gothic", cursive',
+  '"BoothBrush", "Malgun Gothic", cursive',
+  '"BoothDoHyeon", "Malgun Gothic", sans-serif',
+  '"BoothBlackHan", "Malgun Gothic", sans-serif',
+  '"BoothBagel", "Malgun Gothic", sans-serif',
+  '"BoothSongMyung", "Batang", serif',
 ];
-const FONT_NAMES = ['주아체 · 동글동글', '기랑해랑체 · 장난스럽게', '연성체 · 따뜻하게', '나눔손글씨 펜 · 다이어리'];
+const FONT_NAMES = [
+  '주아체 · 동글동글', '기랑해랑체 · 장난스럽게', '연성체 · 따뜻하게', '나눔손글씨 펜 · 다이어리',
+  '개구쟁이 · 삐뚤빼뚤 손글씨', '동글 · 말랑말랑', '큐트폰트 · 아기자기', '싱글데이 · 또박또박 손글씨',
+  '나눔손글씨 붓 · 붓글씨', '도현체 · 굵고 또렷', '검은고딕 · 아주 굵게', '베이글팻 · 통통한 제목', '송명체 · 차분한 명조',
+];
 let currentFont = STICKER_FONTS[0];
 const characterImages = new Map();
 const characterAssets = window.BOOTH_CHARACTERS || [];

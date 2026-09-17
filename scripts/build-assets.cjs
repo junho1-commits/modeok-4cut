@@ -2,9 +2,14 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
-const fonts = [
+const fonts = [   // [CSS family, ttf] — index.html 의 STICKER_FONTS / FONT_NAMES 와 순서를 맞출 것
   ['BoothJua', 'Jua-Regular.ttf'], ['BoothKirang', 'KirangHaerang-Regular.ttf'],
   ['BoothYeon', 'YeonSung-Regular.ttf'], ['BoothPen', 'NanumPenScript-Regular.ttf'],
+  ['BoothGaegu', 'Gaegu-Bold.ttf'], ['BoothDongle', 'Dongle-Bold.ttf'],
+  ['BoothCute', 'CuteFont-Regular.ttf'], ['BoothSingle', 'SingleDay-Regular.ttf'],
+  ['BoothBrush', 'NanumBrushScript-Regular.ttf'], ['BoothDoHyeon', 'DoHyeon-Regular.ttf'],
+  ['BoothBlackHan', 'BlackHanSans-Regular.ttf'], ['BoothBagel', 'BagelFatOne-Regular.ttf'],
+  ['BoothSongMyung', 'SongMyung-Regular.ttf'],
 ];
 fs.writeFileSync(path.join(root, 'assets/fonts/fonts.css'), fonts.map(([family, file]) => {
   const data = fs.readFileSync(path.join(root, 'assets/fonts', file)).toString('base64');
