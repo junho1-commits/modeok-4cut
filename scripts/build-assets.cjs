@@ -25,6 +25,10 @@ const characters = [
   ['animation_grad_heart', '3D 졸업 · 손하트'],
   ['animation_awareness_sign', '3D 장애인식 · 사랑의 수어'],
   ['animation_awareness_wheelchair', '3D 장애인식 · 함께 가요'],
+  ['animation_entrance_backpack', '3D 입학 · 설레는 첫 등교'],
+  ['animation_entrance_bouquet', '3D 입학 · 입학을 축하해요'],
+  ['animation_entrance_pencil', '3D 입학 · 씩씩한 1학년'],
+  ['animation_entrance_welcome', '3D 입학 · 모덕초 환영해요'],
 ].map(([id, label]) => ({
   id, label, src: 'data:image/png;base64,' + fs.readFileSync(path.join(root, 'assets/characters', id + '.png')).toString('base64'),
 }));

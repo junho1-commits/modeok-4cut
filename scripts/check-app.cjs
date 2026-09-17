@@ -39,7 +39,7 @@ vm.runInContext(script,sandbox);
 const run = code=>vm.runInContext(code,sandbox);
 (async()=>{
   await run('assetsReady');
-  assert.equal(run('characterImages.size'), 9);
+  assert.equal(run('characterImages.size'), 13);
   assert.equal(run('FONT_NAMES.length'), 13);
   assert.equal(run('STICKER_FONTS.length'), run('FONT_NAMES.length'), 'Font name list must match font list');
   await run('goDeco()');

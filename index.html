@@ -62,6 +62,8 @@
   #flash.on { animation: flash .35s ease-out; }
   @keyframes flash { 0% { opacity: 1; } 100% { opacity: 0; } }
   #shotInfo { position: absolute; top: 16px; left: 24px; font-size: 32px; font-weight: 700; text-shadow: 0 2px 8px #000; }
+  #camRes { position: absolute; top: 16px; right: 20px; font-size: 15px; opacity: .55; text-shadow: 0 1px 4px #000; }
+  #camRes.low { opacity: 1; color: #ffd166; font-weight: 700; }
   #shootNowBtn { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 5; }
   #shootNowBtn:active { transform: translateX(-50%) scale(.96); }
   .thumbs { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
@@ -123,6 +125,10 @@
   #qrStatus { font-size: 16px; color: var(--muted); text-align: center; min-height: 22px; }
   #qrStatus.err { color: #d9435f; }
   #printing { font-size: 24px; color: var(--accent-dark); min-height: 30px; }
+  #saveMenu { padding: 10px 16px; background: #fff; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+  #saveMenu[hidden] { display: none; }
+  #saveMenu .btn { line-height: 1.25; }
+  #saveMenu small { font-size: 13px; font-weight: 500; opacity: .8; }
   #copyAsk { display: flex; flex-direction: column; align-items: center; gap: 12px; }
   #copyAsk[hidden] { display: none; }
   .copies .btn { font-size: 26px; padding: 14px 34px; }
@@ -142,9 +148,8 @@
     html, body { overflow: visible; height: auto; background: #fff; }
     body > *:not(#printArea) { display: none !important; }
     #printArea { display: block; }
-    #printArea img { width: 100mm; height: 148mm; display: block; break-after: page; page-break-after: always; }
+    #printArea img { display: block; break-after: page; page-break-after: always; }   /* 크기는 applyPaper() 가 인화지 설정에 맞춰 넣음 */
     #printArea img:last-child { break-after: auto; page-break-after: auto; }
-    @page { size: 100mm 148mm; margin: 0; }
   }
 </style>
 </head>
@@ -177,6 +182,7 @@
     <div id="count"></div>
     <div id="flash"></div>
     <div id="shotInfo"></div>
+    <div id="camRes"></div>
     <button class="btn" id="shootNowBtn" onclick="shootNow()" hidden>📸 바로 찍기</button>
   </div>
   <div class="thumbs" id="thumbs"></div>
@@ -257,9 +263,15 @@
     </div>
   </div>
   <div class="row">
-    <button class="btn secondary small" onclick="saveImage()">💾 저장</button>
+    <button class="btn secondary small" onclick="toggleSaveMenu()">💾 저장</button>
     <button class="btn secondary small" id="nextTeamBtn" onclick="startShoot()">인쇄 없이 다시 찍기</button>
     <button class="btn secondary small" onclick="go('idle')">처음으로</button>
+  </div>
+  <div id="saveMenu" class="row" hidden>
+    <span class="sub">어떤 프린터용으로 저장할까요?</span>
+    <button class="btn small" onclick="saveImage('selphy')">캐논 셀피용<br><small>100×148mm · 1181×1748</small></button>
+    <button class="btn small" onclick="saveImage('kodak')">코닥 4×6용<br><small>102×152mm · 1200×1800 (휴대폰 → 코닥 앱)</small></button>
+    <button class="btn secondary small" onclick="toggleSaveMenu(false)">취소</button>
   </div>
   <div class="hint" id="autoBack"></div>
 </section>
@@ -269,11 +281,16 @@
   <div class="panel">
     <h3 style="margin-top:0">설정</h3>
     <label>카메라 <select id="camSelect"></select></label>
+    <label>촬영 해상도 <span id="camResSetting" style="font-size:16px;color:#777">촬영을 한 번 하면 표시돼요</span></label>
     <label>학교/행사 이름 <input id="setTitle"></label>
     <label>하단 문구 <input id="setFooter" placeholder="예: 2026 졸업을 축하해요"></label>
     <label>카운트다운(초) <input id="setCount" type="number" min="2" max="10"></label>
     <label>거울 모드 <input id="setMirror" type="checkbox"></label>
     <label>완성 후 자동 인쇄 <input id="setAutoPrint" type="checkbox"></label>
+    <label>인화지 <select id="setPaper">
+      <option value="selphy">캐논 셀피 100×148mm (KP 엽서)</option>
+      <option value="kodak46">4×6인치 102×152mm (PC 인쇄 되는 다이서브 프린터)</option>
+    </select></label>
     <label>날짜 표시 <input id="setDate" type="checkbox"></label>
     <label>사용자 프레임 PNG<br><small>(1181×1748, 사진 자리는 투명)</small> <input id="setFramePng" type="file" accept="image/png"></label>
     <label>사용자 프레임 지우기 <button class="btn small secondary" onclick="clearCustomFrame()">지우기</button></label>
@@ -471,7 +488,7 @@ const STICKER_THEMES = [
 
 const DEFAULTS = {
   title: '모덕초등학교', footer: '', countdown: 6,
-  mirror: true, autoPrint: false, showDate: true, camId: '', ver: 2,
+  mirror: true, autoPrint: false, showDate: true, camId: '', paper: 'selphy', ver: 2,
   // Apps Script 웹앱 URL (qr-server/ 참고). 설정에서 바꿀 수 있고, 비우면 QR 기능 꺼짐
   qrUrl: 'https://script.google.com/macros/s/AKfycbxR9QIIfbfP4c2pakyOtAcaucuSNNj5D-hFw7sHzTRZ1PfTS1q_y8J2jkdAmOHiOdeZ/exec',
 };
@@ -485,9 +502,20 @@ const store = {
 let S = Object.assign({}, DEFAULTS, JSON.parse(store.get('booth.settings') || '{}'));
 if (!(S.ver >= 2)) { S.countdown = DEFAULTS.countdown; S.ver = 2; }   // 예전 저장값(3초) → 6초로 한 번만 갱신
 if (!(S.ver >= 3)) { if (!S.qrUrl) S.qrUrl = DEFAULTS.qrUrl; S.ver = 3; }   // QR 주소가 비어 있던 저장값 → 기본 주소 채움
+// 인화지 종류 — 캔버스(1181×1748, 100×148 비율)는 그대로 두고 인쇄 크기만 바꿈 (4×6 은 비율 차이 0.7% 라 티 안 남)
+const PAPERS = {
+  selphy:  { w: 100, h: 148, name: '캐논 셀피 100×148mm' },
+  kodak46: { w: 102, h: 152, name: '4×6인치 (102×152mm)' },
+};
+function applyPaper() {
+  const p = PAPERS[S.paper] || PAPERS.selphy;
+  let st = document.getElementById('paperStyle');
+  if (!st) { st = document.createElement('style'); st.id = 'paperStyle'; document.head.appendChild(st); }
+  st.textContent = `@media print { @page { size: ${p.w}mm ${p.h}mm; margin: 0; } #printArea img { width: ${p.w}mm; height: ${p.h}mm; } }`;
+}
 let customFrame = store.get('booth.customFrame');
 
-var stream = null, shots = [], picked = [], shotCount = 4, selectedFrame = FRAMES[0], resultDataUrl = null, autoBackTimer = null, decoTimer = null;
+var stream = null, shots = [], picked = [], shotCount = 4, selectedFrame = FRAMES[0], resultDataUrl = null, printDataUrl = null, autoBackTimer = null, decoTimer = null;
 var stickers = [], selStk = -1;
 // scripts/build-assets.cjs 의 fonts 배열과 같은 순서
 const STICKER_FONTS = [
@@ -546,22 +574,41 @@ function goFrame() { go('frame'); }
 /* ---------- 카메라 ---------- */
 async function openCamera() {
   if (stream) stream.getTracks().forEach(t => t.stop());
-  const constraints = {
-    audio: false,
-    video: {
-      deviceId: S.camId ? { exact: S.camId } : undefined,
-      width: { ideal: 2592 }, height: { ideal: 1944 }, frameRate: { ideal: 30 },
-    },
-  };
+  // 카메라가 낼 수 있는 가장 큰 해상도를 요청 (ideal 이라 지원하는 것 중 가장 가까운 걸로 열림)
+  const hi = { width: { ideal: 4096 }, height: { ideal: 3072 }, frameRate: { ideal: 30 } };
   try {
-    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { deviceId: S.camId ? { exact: S.camId } : undefined, ...hi } });
   } catch (e) {
-    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    // 저장해 둔 카메라를 못 찾으면(카메라 바꿔 꽂음 등) 아무 카메라나 — 단, 해상도 요청은 그대로 유지
+    // (예전엔 여기서 { video: true } 로 열어 640×480 저화질로 찍히는 문제가 있었음)
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: hi }); }
+    catch (e2) { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true }); }
   }
+  const track = stream.getVideoTracks()[0];
+  // 열린 뒤에도 카메라가 더 큰 해상도를 지원하면 그쪽으로 올림
+  try {
+    const cap = track.getCapabilities ? track.getCapabilities() : null;
+    const st = track.getSettings();
+    if (cap && cap.width && cap.height && (cap.width.max > st.width || cap.height.max > st.height))
+      await track.applyConstraints({ width: { ideal: cap.width.max }, height: { ideal: cap.height.max }, frameRate: { ideal: 30 } });
+  } catch (e) {}
   const v = document.getElementById('video');
   v.srcObject = stream;
   v.classList.toggle('mirror', S.mirror);
   await new Promise(r => v.onloadedmetadata = r);
+  showCamRes(v.videoWidth, v.videoHeight);
+}
+
+// 실제로 찍히는 해상도를 촬영 화면 구석과 설정 창에 표시 (사진 한 칸이 535×690px 라 세로 960px 은 돼야 선명함)
+var camRes = null;
+function showCamRes(w, h) {
+  camRes = { w, h };
+  const low = h < 960;
+  const txt = `${w}×${h}` + (low ? ' ⚠ 저화질 — 카메라/USB 연결을 확인하세요' : '');
+  const el = document.getElementById('camRes');
+  el.textContent = txt; el.classList.toggle('low', low);
+  const s = document.getElementById('camResSetting'); if (s) s.textContent = txt;
+  console.log('camera resolution', w, h);
 }
 
 async function listCameras() {
@@ -590,6 +637,7 @@ function beep(freq = 880, dur = 0.08) {
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // 웹캠(4:3 가로) 화면에서 세로형 비율로 중앙 크롭 — 미리보기(object-fit: cover)와 동일한 영역
+// 바로 사진 칸 크기(535×690)로 줄여서 저장 → 합성 때 다시 크기를 바꾸지 않아 또렷하고, 꾸미기 화면도 가벼움
 function captureFrame() {
   const v = document.getElementById('video');
   const vw = v.videoWidth, vh = v.videoHeight;
@@ -597,11 +645,33 @@ function captureFrame() {
   if (ch > vh) { ch = vh; cw = Math.round(vh * PHOTO_RATIO); }
   const sx = (vw - cw) / 2, sy = (vh - ch) / 2;
   const c = document.createElement('canvas');
-  c.width = cw; c.height = ch;
+  c.width = LAYOUT.photoW; c.height = LAYOUT.photoH;
   const ctx = c.getContext('2d');
-  if (S.mirror) { ctx.translate(cw, 0); ctx.scale(-1, 1); }
-  ctx.drawImage(v, sx, sy, cw, ch, 0, 0, cw, ch);
+  ctx.imageSmoothingQuality = 'high';
+  if (S.mirror) { ctx.translate(c.width, 0); ctx.scale(-1, 1); }
+  ctx.drawImage(v, sx, sy, cw, ch, 0, 0, c.width, c.height);
+  sharpen(ctx, c.width, c.height, SHARPEN);
   return c;
+}
+
+// 웹캠은 어두우면 노이즈를 지우느라 얼굴을 뭉개 놓음 → 줄인 뒤 윤곽을 되살림 (언샤프 마스크: 원본 + amount × (원본 − 흐림))
+const SHARPEN = 0.6;   // 0 이면 끔. 0.4~0.8 정도가 자연스러움
+function sharpen(ctx, w, h, amount) {
+  if (!amount) return;
+  const img = ctx.getImageData(0, 0, w, h), src = img.data, out = new Uint8ClampedArray(src);
+  const W4 = w * 4;
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = y * W4 + x * 4;
+      for (let k = 0; k < 3; k++) {
+        const j = i + k;
+        const blur = (src[j - W4 - 4] + src[j - W4] + src[j - W4 + 4] + src[j - 4] + src[j] + src[j + 4] + src[j + W4 - 4] + src[j + W4] + src[j + W4 + 4]) / 9;
+        out[j] = src[j] + amount * (src[j] - blur);
+      }
+    }
+  }
+  img.data.set(out);
+  ctx.putImageData(img, 0, 0);
 }
 
 var shootSeq = 0, skipCountdown = false;
@@ -616,7 +686,18 @@ async function startShoot() {
   const info = document.getElementById('shotInfo');
   const nowBtn = document.getElementById('shootNowBtn');
   nowBtn.hidden = true;
-  try { await openCamera(); } catch (e) { alert('카메라를 열 수 없어요: ' + e.message); go('idle'); return; }
+  try { await openCamera(); }
+  catch (e) {
+    // 다른 프로그램(다른 크롬 창의 같은 앱, Logi Tune, 카메라 앱, Zoom 등)이 카메라를 잡고 있으면 "Device in use"(NotReadableError)
+    const busy = e.name === 'NotReadableError' || /in use|could not start/i.test(e.message);
+    const msg = busy
+      ? '다른 프로그램이 카메라를 쓰고 있어요.\n\n다른 크롬 창에 열린 "모덕 네컷" 탭, Logi Tune, 카메라 앱, Zoom 등을 모두 닫은 뒤 [확인]을 누르면 다시 시도해요.'
+      : e.name === 'NotAllowedError' ? '카메라 사용이 허용되지 않았어요.\n\n크롬 주소창의 카메라 아이콘에서 허용해 주세요. [확인]을 누르면 다시 시도해요.'
+      : '카메라를 열 수 없어요: ' + e.message + '\n\n카메라 연결(USB)을 확인한 뒤 [확인]을 누르면 다시 시도해요.';
+    if (!confirm(msg + '\n\n(취소: 처음 화면으로)')) { go('idle'); return; }
+    if (session !== shootSeq) return;
+    startShoot(); return;
+  }
   if (session !== shootSeq) return;
   await sleep(600);
   for (let i = 0; i < shotCount; i++) {
@@ -772,7 +853,9 @@ function drawPage(ctx, frame, photos, opts = {}) {
 function makePageCanvas(frame, photos, opts) {
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
-  drawPage(c.getContext('2d'), frame, photos, opts);
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';   // 큰 사진을 칸 크기로 줄일 때 계단 현상 없이 부드럽게
+  drawPage(ctx, frame, photos, opts);
   return c;
 }
 
@@ -922,10 +1005,12 @@ function stkClear() { stickers = []; selStk = -1; redrawDeco(); }
 function compose() {
   const photos = picked.map(i => shots[i]);
   const page = makePageCanvas(selectedFrame, photos, { stickers, highlight: -1 });
-  resultDataUrl = page.toDataURL('image/jpeg', 0.95);
+  resultDataUrl = page.toDataURL('image/jpeg', 0.95);   // 저장·QR 업로드용 (용량 절약)
+  printDataUrl = page.toDataURL('image/png');            // 인쇄용은 압축 손실 없는 PNG
   document.getElementById('resultImg').src = resultDataUrl;
   document.getElementById('printing').textContent = '';
   document.getElementById('copyAsk').hidden = false;
+  toggleSaveMenu(false);
   document.getElementById('nextTeamBtn').textContent = '인쇄 없이 다시 찍기';
   go('result');
   uploadForQr();   // 인터넷이 있으면 Drive 에 올리고 QR 표시 (실패해도 인쇄 흐름은 계속)
@@ -949,7 +1034,7 @@ function doPrint(copies = 1) {
   const area = document.getElementById('printArea');
   area.innerHTML = '';
   for (let i = 0; i < copies; i++) {
-    const im = document.createElement('img'); im.src = resultDataUrl; im.alt = ''; area.appendChild(im);
+    const im = document.createElement('img'); im.src = printDataUrl || resultDataUrl; im.alt = ''; area.appendChild(im);
   }
   const msg = document.getElementById('printing');
   msg.textContent = `🖨 ${copies}장 인쇄 중이에요… (약 ${copies}분 걸려요)`;
@@ -1014,12 +1099,35 @@ async function testQrUrl() {
     msg.textContent = j.ok ? `연결 성공 (폴더: ${j.folder}, ${j.keepDays}일 보관)` : '응답이 이상해요: ' + JSON.stringify(j);
   } catch (e) { msg.textContent = '연결 실패 — 주소와 배포 설정(모든 사용자)을 확인하세요'; }
 }
-function saveImage() {
+function toggleSaveMenu(show) {
+  const m = document.getElementById('saveMenu');
+  m.hidden = show === undefined ? !m.hidden : !show;
+}
+// 코닥 PD460 같은 4×6인치(2:3) 프린터용 — PC 인쇄가 안 되는 기종은 이 파일을 휴대폰으로 옮겨 코닥 앱에서 인쇄
+// 인화지 판(100:148)이 2:3 보다 아주 조금 좁아서, 높이를 맞춰 3% 키우고 좌우 8px 씩만 잘라냄 (여백 44px 안쪽이라 사진은 안 잘림)
+const KODAK = { w: 1200, h: 1800 };   // 4×6인치 @300dpi
+function makeKodakDataUrl() {
+  const page = makePageCanvas(selectedFrame, picked.map(i => shots[i]), { stickers, highlight: -1 });
+  const c = document.createElement('canvas');
+  c.width = KODAK.w; c.height = KODAK.h;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  const scale = Math.max(KODAK.w / W, KODAK.h / H);
+  const dw = W * scale, dh = H * scale;
+  ctx.fillStyle = selectedFrame.bg; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.drawImage(page, (KODAK.w - dw) / 2, (KODAK.h - dh) / 2, dw, dh);
+  return c.toDataURL('image/jpeg', 0.95);
+}
+// 'selphy': 100×148mm 판 그대로 / 'kodak': 4×6인치(1200×1800) 로 맞춘 파일
+function saveImage(kind = 'selphy') {
   if (!resultDataUrl) return;
+  toggleSaveMenu(false);
   const a = document.createElement('a');
   const d = new Date();
   const stamp = d.toISOString().replace(/[-:T]/g, '').slice(0, 14);
-  a.href = resultDataUrl; a.download = `4cut_${stamp}.jpg`; a.click();
+  a.href = kind === 'kodak' ? makeKodakDataUrl() : resultDataUrl;
+  a.download = `4cut_${stamp}_${kind === 'kodak' ? '4x6' : 'selphy'}.jpg`;
+  a.click();
 }
 
 /* ---------- 프레임 목록 ---------- */
@@ -1056,6 +1164,7 @@ async function openSettings() {
   document.getElementById('setCount').value = S.countdown;
   document.getElementById('setMirror').checked = S.mirror;
   document.getElementById('setAutoPrint').checked = S.autoPrint;
+  document.getElementById('setPaper').value = PAPERS[S.paper] ? S.paper : 'selphy';
   document.getElementById('setDate').checked = S.showDate;
   document.getElementById('setQrUrl').value = S.qrUrl;
   document.getElementById('qrTestMsg').textContent = '';
@@ -1069,10 +1178,11 @@ function saveSettings() {
   S.countdown = Math.max(2, Math.min(10, +document.getElementById('setCount').value || DEFAULTS.countdown));
   S.mirror = document.getElementById('setMirror').checked;
   S.autoPrint = document.getElementById('setAutoPrint').checked;
+  S.paper = document.getElementById('setPaper').value;
   S.showDate = document.getElementById('setDate').checked;
   S.qrUrl = document.getElementById('setQrUrl').value.trim();
   store.set('booth.settings', JSON.stringify(S));
-  applyTitle();
+  applyTitle(); applyPaper();
   closeSettings();
 }
 document.getElementById('setFramePng').addEventListener('change', e => {
@@ -1113,7 +1223,7 @@ document.addEventListener('keydown', e => {
   if (e.key.toLowerCase() === 's' && cur !== 'shoot') openSettings();
 });
 
-applyTitle();
+applyTitle(); applyPaper();
 </script>
 </body>
 </html>
