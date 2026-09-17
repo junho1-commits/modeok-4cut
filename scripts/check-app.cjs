@@ -29,6 +29,7 @@ const document = { documentElement:element(), body:element(),
 const sandbox = {document,window:{},console,Date,Math,Promise,localStorage:{getItem:()=>null},
   Image:class{constructor(){this.naturalWidth=1254;this.naturalHeight=1254}set src(value){this._src=value;queueMicrotask(()=>this.onload?.())}},
   setInterval(fn){const id=nextInterval++;intervals.set(id,fn);return id}, clearInterval:id=>intervals.delete(id), setTimeout,clearTimeout,
+  AbortController:class{constructor(){this.signal={}}abort(){}}, fetch:async()=>({json:async()=>({ok:false,error:'test sandbox has no network'})}),
 };
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(path.join(root,'assets/characters/characters.js'),'utf8'),sandbox);

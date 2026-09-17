@@ -472,7 +472,8 @@ const STICKER_THEMES = [
 const DEFAULTS = {
   title: '모덕초등학교', footer: '', countdown: 6,
   mirror: true, autoPrint: false, showDate: true, camId: '', ver: 2,
-  qrUrl: '',   // Apps Script 웹앱 URL (비어 있으면 QR 기능 꺼짐)
+  // Apps Script 웹앱 URL (qr-server/ 참고). 설정에서 바꿀 수 있고, 비우면 QR 기능 꺼짐
+  qrUrl: 'https://script.google.com/macros/s/AKfycbxR9QIIfbfP4c2pakyOtAcaucuSNNj5D-hFw7sHzTRZ1PfTS1q_y8J2jkdAmOHiOdeZ/exec',
 };
 const DECO_SECONDS = 60;   // 꾸미기 제한 시간
 /* localStorage 는 일부 환경에서 예외를 던지므로 안전하게 감쌈 */
@@ -483,6 +484,7 @@ const store = {
 };
 let S = Object.assign({}, DEFAULTS, JSON.parse(store.get('booth.settings') || '{}'));
 if (!(S.ver >= 2)) { S.countdown = DEFAULTS.countdown; S.ver = 2; }   // 예전 저장값(3초) → 6초로 한 번만 갱신
+if (!(S.ver >= 3)) { if (!S.qrUrl) S.qrUrl = DEFAULTS.qrUrl; S.ver = 3; }   // QR 주소가 비어 있던 저장값 → 기본 주소 채움
 let customFrame = store.get('booth.customFrame');
 
 var stream = null, shots = [], picked = [], shotCount = 4, selectedFrame = FRAMES[0], resultDataUrl = null, autoBackTimer = null, decoTimer = null;
