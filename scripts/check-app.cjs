@@ -39,7 +39,7 @@ vm.runInContext(script,sandbox);
 const run = code=>vm.runInContext(code,sandbox);
 (async()=>{
   await run('assetsReady');
-  assert.equal(run('characterImages.size'), 13);
+  assert.equal(run('characterImages.size'), 16);
   assert.equal(run('FONT_NAMES.length'), 13);
   assert.equal(run('STICKER_FONTS.length'), run('FONT_NAMES.length'), 'Font name list must match font list');
   await run('goDeco()');
@@ -59,12 +59,21 @@ const run = code=>vm.runInContext(code,sandbox);
   assert.ok(elements.get('result').classList.contains('active'),'Timer must compose the result');
   assert.equal(run('decoTimer'),null);
   run("go('idle')");
-  for(const key of '1234')documentEvents.keydown({key,target:{closest:()=>null}});
-  assert.ok(document.body.classList.contains('secret-unlocked'));
-  assert.ok(elements.get('idle').classList.contains('active'),'Secret code must not start capture');
+  assert.ok(run("document.getElementById('setupFont').children.length"), 13, 'Setup font list must be filled');
+  run("document.getElementById('setupTitle').value='모덕초 졸업식'; document.getElementById('setupFooter').value='졸업을 축하해요'; document.getElementById('setupFont').value='9'; document.getElementById('setupDate').checked=false; document.getElementById('setupShots').value='6'; document.getElementById('setupFrame').value='grad'; document.getElementById('setupTheme').value='입학'; setupChanged()");
+  assert.equal(run('S.title'),'모덕초 졸업식'); assert.equal(run('S.footer'),'졸업을 축하해요'); assert.equal(run('S.titleFont'),9);
+  assert.equal(run('S.showDate'),false); assert.equal(run('S.shots'),6); assert.equal(run('S.frameId'),'grad'); assert.equal(run('S.decoTheme'),'입학');
+  assert.ok(elements.get('idle').classList.contains('active'),'Changing setup must not start capture');
+  await run('goFrame()');
+  assert.ok(elements.get('deco').classList.contains('active'),'Fixed frame must skip the frame screen');
+  assert.equal(run('selectedFrame.id'),'grad');
+  assert.equal(run('STICKER_THEMES[decoTab].name'),'입학','Deco must open on the configured theme');
+  run("go('idle'); document.getElementById('setupFrame').value=''; setupChanged()");
+  await run('goFrame()');
+  assert.ok(elements.get('frame').classList.contains('active'),'Student choice must show the frame screen');
   for(const file of fs.readdirSync(path.join(root,'assets/fonts')).filter(f=>f.endsWith('.ttf'))) {
     assert.equal(fs.readFileSync(path.join(root,'assets/fonts',file)).readUInt32BE(0),65536,'Valid TrueType signature');
   }
-  console.log('PASS: asset loading, character drawing, rotation/size/hit testing, Korean font selection, typing guard, 60-second completion, secret code, font file signatures.');
+  console.log('PASS: asset loading, character drawing, rotation/size/hit testing, Korean font selection, typing guard, 60-second completion, event setup (title font, fixed frame, sticker theme), font file signatures.');
   console.log('Scope: JavaScript integration with simulated DOM/canvas; not a real browser visual or printer test.');
 })().catch(error=>{console.error(error);process.exitCode=1});
