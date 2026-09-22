@@ -58,20 +58,35 @@ function doGet(e) {
 }
 
 // 촬영 PC 에서 { image: "data:image/jpeg;base64,....", name: "4cut_20260917..." } 를 text/plain 으로 POST
-// 휴대폰 앱은 { ..., print: true, copies: 1~4 } 를 더 보냄 → 이름이 print_…_x2.jpg 로 저장되어 인쇄 대기열에 들어감
+// 휴대폰 앱은 { ..., submit: true, copies: 1~4 } 를 보냄 → 그날 순서 번호로 이름 붙여 저장(0922-037_2장.jpg)하고 number 를 돌려줌
+// (선택) print: true 면 이름 앞에 print_ 가 붙어 PC 인쇄 대기열(print-station)에 들어감
 function doPost(e) {
   try {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     const m = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(body.image || '');
     if (!m) return json_({ ok: false, error: 'image 필드가 비었거나 JPEG 데이터 URL 이 아니에요' });
     let name = String(body.name || 'photo').replace(/[^\w가-힣-]/g, '_').slice(0, 60);
-    if (body.print) name = 'print_' + name + '_x' + Math.max(1, Math.min(4, Number(body.copies) || 1));
+    const copies = Math.max(1, Math.min(4, Number(body.copies) || 1));
+    let number = null;
+    if (body.submit) {   // 휴대폰 "사진 제출": 그날 1번부터 순서대로 번호를 매겨 파일 이름으로 (여러 폰이 동시에 보내도 안 겹치게 잠금)
+      const lock = LockService.getScriptLock(); lock.waitLock(10000);
+      try {
+        const props = PropertiesService.getScriptProperties();
+        const key = 'seq_' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyyMMdd');
+        number = Number(props.getProperty(key) || 0) + 1;
+        props.setProperty(key, String(number));
+      } finally { lock.releaseLock(); }
+      name = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MMdd') + '-' + ('00' + number).slice(-3) + '_' + copies + '장';   // 예: 0922-037_2장
+    }
+    if (body.print) name = 'print_' + name + '_x' + copies;
     name += '.jpg';
     const blob = Utilities.newBlob(Utilities.base64Decode(m[1]), 'image/jpeg', name);
     const file = folder_().createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     return json_({
       ok: true,
+      number: number,            // 사진 제출이면 학생에게 알려줄 번호
+      name: name,
       id: file.getId(),
       url: 'https://drive.google.com/file/d/' + file.getId() + '/view',   // 휴대폰에서 열면 미리보기 + 다운로드 버튼
     });

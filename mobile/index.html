@@ -113,6 +113,9 @@
   #resultImg { max-height:46dvh; width:auto; max-width:100%; align-self:center; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.2); }
   .copies { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
   .copies .btn { padding:12px 0; }
+  .copies .btn.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  #numberBox { text-align:center; background:#fff; border-radius:16px; padding:10px 14px; box-shadow:0 6px 20px rgba(0,0,0,.08); }
+  .big-number { font-size:84px; font-weight:800; line-height:1.05; color:var(--accent-dark); }
   #sendStatus { text-align:center; font-size:17px; min-height:24px; color:var(--accent-dark); }
   .hint { text-align:center; font-size:14px; color:var(--muted); }
 
@@ -217,19 +220,25 @@
 <section id="done" class="screen">
   <img id="resultImg" alt="완성 사진">
   <div id="copyAsk">
-    <p class="sub">🖨 몇 장 뽑을까요? (선생님이 드라이브에서 출력해요)</p>
-    <div class="copies">
-      <button class="btn" onclick="sendPrint(1)">1장</button>
-      <button class="btn" onclick="sendPrint(2)">2장</button>
-      <button class="btn" onclick="sendPrint(3)">3장</button>
-      <button class="btn" onclick="sendPrint(4)">4장</button>
+    <p class="sub">🖨 몇 장 뽑을까요?</p>
+    <div class="copies" id="copyBtns">
+      <button class="btn secondary on" onclick="pickCopies(1)">1장</button>
+      <button class="btn secondary" onclick="pickCopies(2)">2장</button>
+      <button class="btn secondary" onclick="pickCopies(3)">3장</button>
+      <button class="btn secondary" onclick="pickCopies(4)">4장</button>
     </div>
+    <button class="btn wide" style="margin-top:10px" onclick="submitPhoto()">📤 사진 제출</button>
+  </div>
+  <div id="numberBox" hidden>
+    <div class="sub">내 사진 번호</div>
+    <div class="big-number" id="photoNumber">-</div>
+    <div class="sub">선생님께 이 번호를 말해 주세요</div>
   </div>
   <div id="sendStatus"></div>
   <div class="row">
-    <button class="btn secondary small" id="retryBtn" onclick="sendPrint(lastCopies)" hidden>다시 보내기</button>
+    <button class="btn secondary small" id="retryBtn" onclick="submitPhoto()" hidden>다시 제출</button>
     <button class="btn small" onclick="shareImage()">💾 폰에 저장</button>
-    <button class="btn secondary small" id="nextBtn" onclick="startShoot()">인쇄 없이 다시 찍기</button>
+    <button class="btn secondary small" id="nextBtn" onclick="startShoot()">제출 없이 다시 찍기</button>
   </div>
   <div class="hint" id="autoBack"></div>
   <div class="row"><button class="btn secondary small" onclick="go('setup')">행사 세팅으로</button></div>
@@ -259,7 +268,7 @@
    모덕 네컷 휴대폰판
    - 규격·프레임·스티커·합성은 ../shared/booth-core.js (PC 와 공통)
    - 흐름: 행사 세팅 → 촬영 → (6·8장) 고르기 → 프레임(고정이면 생략) → 꾸미기(시간제한 없음)
-           → 매수 선택 → 사진을 Apps Script 로 학교 Drive(네컷사진 폴더)에 올림(파일 이름에 매수) → 다시 촬영
+           → 매수 선택 → "사진 제출" → Apps Script 가 그날 순서 번호를 매겨 Drive(네컷사진 폴더)에 0922-037_2장.jpg 로 저장 → 학생에게 번호 표시 → 다시 촬영
    - 출력은 선생님이 Drive 에서 직접. (선택) print-station/ 을 켜 두면 자동 인쇄도 가능 — 그땐 Code.gs 재배포 필요
    - 휴대폰 글꼴은 4종만 내장(fonts.css): 번호는 PC 와 같음 (0 주아, 3 나눔손글씨 펜, 4 개구쟁이, 9 도현)
    ============================================================ */
@@ -278,7 +287,7 @@ let S = Object.assign({}, DEFAULTS, JSON.parse(store.get('booth.mobile.settings'
 if (!MOBILE_FONTS.includes(S.titleFont)) S.titleFont = 0;
 const saveS = () => store.set('booth.mobile.settings', JSON.stringify(S));
 
-var stream = null, shots = [], picked = [], shotCount = 4, selectedFrame = FRAMES[0], resultDataUrl = null, autoBackTimer = null, lastCopies = 1;
+var stream = null, shots = [], picked = [], shotCount = 4, selectedFrame = FRAMES[0], resultDataUrl = null, autoBackTimer = null, copiesPick = 1;
 var stickers = [], selStk = -1;
 let currentFont = STICKER_FONTS[0];
 
@@ -691,35 +700,53 @@ function compose() {
   resultDataUrl = page.toDataURL('image/jpeg', 0.92);
   document.getElementById('resultImg').src = resultDataUrl;
   document.getElementById('copyAsk').hidden = false;
+  document.getElementById('numberBox').hidden = true;
+  pickCopies(1);
   document.getElementById('sendStatus').textContent = S.serverUrl ? '' : '드라이브 주소가 없어 저장·공유만 할 수 있어요';
   document.getElementById('retryBtn').hidden = true;
-  document.getElementById('nextBtn').textContent = '인쇄 없이 다시 찍기';
+  document.getElementById('nextBtn').textContent = '제출 없이 다시 찍기';
   document.getElementById('autoBack').textContent = '';
   go('done');
 }
-async function sendPrint(copies) {
+function pickCopies(n) {
+  copiesPick = n;
+  document.querySelectorAll('#copyBtns .btn').forEach((b, i) => b.classList.toggle('on', i + 1 === n));
+}
+// 서버가 옛 버전이라 번호를 안 주면 휴대폰이 스스로 매김 (그날 1번부터, 이 폰 기준 — 폰이 여러 대면 겹칠 수 있음)
+function localNumber() {
+  const day = new Date().toISOString().slice(0, 10);
+  if (S.seqDay !== day) { S.seqDay = day; S.seq = 0; }
+  S.seq = (S.seq || 0) + 1; saveS();
+  return S.seq;
+}
+async function submitPhoto() {
   if (!resultDataUrl || !S.serverUrl) return;
-  lastCopies = copies = Math.max(1, Math.min(4, copies | 0));
+  const copies = copiesPick;
   document.getElementById('copyAsk').hidden = true;
   const st = document.getElementById('sendStatus'), retry = document.getElementById('retryBtn');
-  st.textContent = `📡 드라이브로 보내는 중… (${copies}장)`; retry.hidden = true;
+  st.textContent = `📡 사진을 제출하는 중… (${copies}장)`; retry.hidden = true;
   try {
     const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 40000);
-    const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+    const d = new Date(), mmdd = String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+    const fallbackNo = localNumber();
     const res = await fetch(S.serverUrl, { method: 'POST', signal: ctrl.signal, headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ image: resultDataUrl, name: `네컷_${stamp}_${copies}장`, print: !!S.autoQueue, copies }) });   // 파일 이름에 매수 표시 → 선생님이 보고 출력
+      body: JSON.stringify({ image: resultDataUrl, submit: true, copies, print: !!S.autoQueue,
+        name: `${mmdd}-${String(fallbackNo).padStart(3, '0')}_${copies}장` }) });   // name 은 옛 서버용 (새 서버는 직접 번호를 매김)
     clearTimeout(t);
     const j = await res.json();
     if (!j.ok) throw new Error(j.error || '서버 오류');
-    st.textContent = `✅ 드라이브에 올라갔어요! 선생님이 ${copies}장 뽑아 줄 거예요`;
+    const number = j.number || fallbackNo;
+    document.getElementById('photoNumber').textContent = number + '번';
+    document.getElementById('numberBox').hidden = false;
+    st.textContent = `✅ 제출 완료! 선생님이 ${copies}장 뽑아 줄 거예요`;
     if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
-    let left = 10;
+    let left = 30;
     document.getElementById('nextBtn').textContent = '다음 친구 →';
     const hint = document.getElementById('autoBack');
     hint.textContent = `${left}초 후 다시 촬영을 시작해요`;
     autoBackTimer = setInterval(() => { left--; hint.textContent = `${left}초 후 다시 촬영을 시작해요`; if (left <= 0) { clearInterval(autoBackTimer); startShoot(); } }, 1000);
   } catch (e) {
-    st.textContent = '❌ 보내지 못했어요 — 인터넷을 확인하고 다시 보내기';
+    st.textContent = '❌ 제출하지 못했어요 — 인터넷을 확인하고 다시 제출';
     retry.hidden = false;
   }
 }
