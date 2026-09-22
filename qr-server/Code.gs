@@ -7,12 +7,11 @@
    - 휴대폰 앱(mobile/)은 print:true 로 보내 "인쇄 대기" 로 저장하고,
      PC 의 인쇄 대기 화면(print-station/)이 list → get → done 순으로 가져가 인쇄합니다.
      (파일 이름 앞에 print_ 가 붙어 있으면 아직 안 뽑은 사진, done_ 이면 인쇄 완료)
-   - cleanup() 을 매일 실행하는 트리거를 걸어 KEEP_DAYS 일이 지난 사진은 휴지통으로 보냅니다.
+   - 사진은 자동으로 지우지 않습니다 (예전엔 7일 뒤 휴지통으로 보냈으나 2026-09-22 에 없앰). 정리는 Drive 에서 직접.
    배포 방법은 같은 폴더의 설치방법.md 참고
    ============================================================ */
 
 const FOLDER_NAME = '네컷사진';   // Drive 에 자동 생성되는 폴더 이름
-const KEEP_DAYS = 7;             // 사진 보관 일수 (지나면 휴지통)
 
 function folder_() {
   const it = DriveApp.getFoldersByName(FOLDER_NAME);
@@ -51,7 +50,7 @@ function doGet(e) {
       if (f.getName().indexOf('print_') === 0) f.setName('done_' + f.getName().slice(6));
       return json_({ ok: true });
     }
-    return json_({ ok: true, folder: FOLDER_NAME, keepDays: KEEP_DAYS, queue: true });   // queue: 인쇄 대기 기능이 있는 배포
+    return json_({ ok: true, folder: FOLDER_NAME, queue: true });   // queue: 인쇄 대기 기능이 있는 배포
   } catch (err) {
     return json_({ ok: false, error: String(err) });
   }
@@ -95,22 +94,10 @@ function doPost(e) {
   }
 }
 
-// 보관 기간이 지난 사진을 휴지통으로 (installCleanupTrigger 로 매일 새벽 3시에 실행)
-function cleanup() {
-  const cutoff = Date.now() - KEEP_DAYS * 24 * 60 * 60 * 1000;
-  const files = folder_().getFiles();
-  let n = 0;
-  while (files.hasNext()) {
-    const f = files.next();
-    if (f.getDateCreated().getTime() < cutoff) { f.setTrashed(true); n++; }
-  }
-  console.log('휴지통으로 보낸 사진: ' + n + '장');
-}
-
-// 편집기에서 한 번만 실행 (권한 승인 창이 뜨면 허용)
-function installCleanupTrigger() {
-  ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
-  ScriptApp.newTrigger('cleanup').timeBased().everyDays(1).atHour(3).create();
-  folder_();   // 폴더도 미리 만들어 둠
-  console.log('매일 03시 cleanup 트리거 등록 완료, 폴더: ' + FOLDER_NAME);
+// 예전의 "7일 뒤 휴지통" 자동 정리를 없앰. 이미 등록된 트리거가 있으면 이 함수를 편집기에서 한 번 실행해 지우세요.
+function removeCleanupTrigger() {
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(t => ScriptApp.deleteTrigger(t));
+  folder_();   // 폴더는 없으면 만들어 둠
+  console.log('자동 삭제 트리거 ' + triggers.length + '개 지움. 사진은 이제 자동으로 지워지지 않습니다. 폴더: ' + FOLDER_NAME);
 }

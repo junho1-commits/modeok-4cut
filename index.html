@@ -862,7 +862,7 @@ async function testQrUrl() {
   msg.textContent = '확인 중…';
   try {
     const j = await (await fetch(url, { method: 'GET' })).json();
-    msg.textContent = j.ok ? `연결 성공 (폴더: ${j.folder}, ${j.keepDays}일 보관)` : '응답이 이상해요: ' + JSON.stringify(j);
+    msg.textContent = j.ok ? `연결 성공 (폴더: ${j.folder})` : '응답이 이상해요: ' + JSON.stringify(j);
   } catch (e) { msg.textContent = '연결 실패 — 주소와 배포 설정(모든 사용자)을 확인하세요'; }
 }
 function toggleSaveMenu(show) {
