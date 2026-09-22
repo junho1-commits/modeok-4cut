@@ -24,3 +24,8 @@
 글꼴 배포 출처: https://github.com/google/fonts/tree/main/ofl (jua, kiranghaerang, yeonsung, nanumpenscript, gaegu, dongle, cutefont, singleday, nanumbrushscript, dohyeon, blackhansans, bagelfatone, songmyung). 글꼴을 추가하려면 ttf 와 OFL.txt 를 `fonts/` 에 넣고 `scripts/build-assets.cjs` 의 fonts 배열과 `index.html` 의 STICKER_FONTS/FONT_NAMES 에 같은 순서로 추가한 뒤 `node scripts/build-assets.cjs` 를 실행합니다.
 
 에셋 파일을 교체한 개발자는 `node scripts/build-assets.cjs`로 묶음을 갱신할 수 있습니다. `node scripts/check-app.cjs`는 DOM과 캔버스를 모의한 기능 검사이며, 실제 브라우저 화면/인쇄 검사를 대체하지 않습니다.
+
+## 휴대폰판 에셋 (`mobile/`)
+- `mobile/fonts/*.woff2` + `mobile/fonts.css`: 주아·나눔손글씨 펜·개구쟁이·도현 4종을 한글 2350자 범위로 잘라 압축(합계 약 1MB). `python scripts/build-mobile-fonts.py` 로 재생성 (pip install fonttools brotli)
+- `mobile/characters/*.webp` + `list.js`: 캐릭터 16종을 가로 640px WebP 로 축소(합계 약 1.5MB). `python scripts/build-mobile-characters.py` 로 재생성 (목록은 `scripts/build-assets.cjs` 의 characters 배열을 읽음)
+- 캐릭터를 추가할 때는 PC 용 `node scripts/build-assets.cjs` 와 휴대폰용 스크립트를 둘 다 실행

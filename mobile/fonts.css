@@ -1,0 +1,5 @@
+/* 휴대폰용 글꼴 4종 (OFL). 원본 ttf 는 assets/fonts/, 만드는 스크립트는 scripts/build-mobile-fonts.py */
+@font-face { font-family:"BoothJua"; src:url("fonts/jua.woff2") format("woff2"); font-display:swap; }
+@font-face { font-family:"BoothPen"; src:url("fonts/nanumpenscript.woff2") format("woff2"); font-display:swap; }
+@font-face { font-family:"BoothGaegu"; src:url("fonts/gaegu.woff2") format("woff2"); font-display:swap; }
+@font-face { font-family:"BoothDoHyeon"; src:url("fonts/dohyeon.woff2") format("woff2"); font-display:swap; }

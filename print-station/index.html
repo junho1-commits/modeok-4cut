@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>모덕 네컷 인쇄 대기</title>
+<style>
+  :root { --bg:#fff5f7; --accent:#ff6b8b; --accent-dark:#e3496c; --muted:#8a8a8a; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; background:var(--bg); color:#2b2b2b; font-family:"Pretendard","Malgun Gothic",sans-serif; display:flex; flex-direction:column; align-items:center; padding:32px; gap:18px; }
+  h1 { margin:0; color:var(--accent-dark); font-size:40px; }
+  .big { font-size:28px; font-weight:700; text-align:center; min-height:40px; }
+  .state { width:min(900px,100%); background:#fff; border-radius:18px; padding:22px 28px; box-shadow:0 8px 28px rgba(0,0,0,.08); }
+  .state.working { border:4px solid var(--accent); }
+  .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .btn { font-size:18px; padding:10px 20px; border-radius:999px; border:none; background:var(--accent); color:#fff; cursor:pointer; }
+  .btn.secondary { background:#fff; color:var(--accent-dark); border:2px solid var(--accent); }
+  input, select { font-size:16px; padding:8px 10px; border:2px solid #e5e5e5; border-radius:10px; }
+  input { width:520px; max-width:100%; }
+  .log { width:min(900px,100%); font-size:15px; color:#444; background:#fff; border-radius:14px; padding:14px 18px; max-height:40vh; overflow-y:auto; }
+  .log div { padding:3px 0; border-bottom:1px solid #f1f1f1; }
+  .muted { color:var(--muted); font-size:15px; }
+  .dot { display:inline-block; width:14px; height:14px; border-radius:50%; background:#bbb; margin-right:8px; vertical-align:middle; }
+  .dot.on { background:#4caf50; animation:pulse 1.6s infinite; }
+  .dot.err { background:#e53935; }
+  @keyframes pulse { 50% { opacity:.35; } }
+  #printArea { display:none; }
+  @media print {
+    body * { visibility:hidden; }
+    #printArea, #printArea * { visibility:visible; }
+    #printArea { display:block; position:fixed; left:0; top:0; }
+    #printArea img { width:100mm; height:148mm; display:block; page-break-after:always; break-after:page; }
+    #printArea img:last-child { page-break-after:auto; break-after:auto; }
+    @page { size:100mm 148mm; margin:0; }
+  }
+</style>
+</head>
+<body>
+<h1>🖨 모덕 네컷 인쇄 대기</h1>
+<div class="muted">휴대폰에서 보낸 사진이 도착하면 자동으로 SELPHY 로 인쇄해요. 이 창을 닫지 마세요.</div>
+<div class="state" id="state">
+  <div class="big" id="status"><span class="dot" id="dot"></span>준비 중…</div>
+  <div class="row" style="margin-top:10px">
+    <span class="muted">오늘 인쇄: <b id="count">0</b>장</span>
+    <span class="muted" id="lastCheck"></span>
+    <button class="btn secondary" onclick="pollNow()">지금 확인</button>
+    <label class="muted">인화지 <select id="paper" onchange="applyPaper()">
+      <option value="selphy">캐논 셀피 100×148mm</option>
+      <option value="kodak46">4×6인치 102×152mm</option>
+    </select></label>
+  </div>
+</div>
+<div class="state">
+  <div class="row">
+    <label class="muted">서버 주소 <input id="serverUrl" placeholder="https://script.google.com/macros/s/…/exec"></label>
+    <button class="btn secondary" onclick="saveUrl()">저장</button>
+    <span class="muted" id="urlMsg"></span>
+  </div>
+  <div class="muted" style="margin-top:8px">휴대폰 앱의 "인쇄 서버 주소" 와 같은 Apps Script 주소. 기본값이 들어 있어 보통은 그대로 두면 됩니다. 인쇄가 안 나가면 SELPHY 가 기본 프린터인지, <code>인쇄대기.bat</code> 로 열었는지 확인하세요.</div>
+</div>
+<div class="log" id="log"></div>
+<div id="printArea"></div>
+
+<script>
+/* ============================================================
+   PC 인쇄 대기 화면 — 휴대폰 앱(mobile/)이 Drive 에 올린 사진을 가져와 인쇄
+   - 4초마다 서버(qr-server/Code.gs) 에 ?action=list → 대기 사진 있으면 ?action=get 으로 받아
+     <img> 에 넣고 window.print() (인쇄대기.bat 이 --kiosk-printing 으로 열어 대화상자 없이 기본 프린터로 감)
+   - 인쇄를 보낸 뒤 ?action=done 으로 표시해 두 번 뽑히지 않게 함
+   ============================================================ */
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbxR9QIIfbfP4c2pakyOtAcaucuSNNj5D-hFw7sHzTRZ1PfTS1q_y8J2jkdAmOHiOdeZ/exec';
+const POLL_MS = 4000;
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+let url = store.get('station.url') || DEFAULT_URL;
+let paper = store.get('station.paper') || 'selphy';
+let busy = false, printed = +(store.get('station.count.' + today()) || 0), timer = null;
+document.getElementById('serverUrl').value = url;
+document.getElementById('paper').value = paper;
+document.getElementById('count').textContent = printed;
+
+function today() { return new Date().toISOString().slice(0, 10); }
+function log(msg, cls) {
+  const el = document.getElementById('log'), d = document.createElement('div');
+  d.textContent = `${new Date().toLocaleTimeString('ko-KR')}  ${msg}`; if (cls) d.style.color = cls;
+  el.prepend(d); while (el.children.length > 80) el.lastChild.remove();
+}
+function setStatus(text, mode) {
+  document.getElementById('status').innerHTML = `<span class="dot ${mode === 'ok' ? 'on' : mode === 'err' ? 'err' : ''}"></span>${text}`;
+  document.getElementById('state').classList.toggle('working', mode === 'work');
+}
+function saveUrl() { url = document.getElementById('serverUrl').value.trim() || DEFAULT_URL; store.set('station.url', url); document.getElementById('urlMsg').textContent = '저장됨'; pollNow(); }
+// 인화지 종류 — 캔버스 비율은 같고 인쇄 크기만 바꿈 (PC 앱과 동일)
+const PAPERS = { selphy: [100, 148], kodak46: [102, 152] };
+function applyPaper() {
+  paper = document.getElementById('paper').value; store.set('station.paper', paper);
+  const [w, h] = PAPERS[paper] || PAPERS.selphy;
+  let st = document.getElementById('paperStyle');
+  if (!st) { st = document.createElement('style'); st.id = 'paperStyle'; document.head.appendChild(st); }
+  st.textContent = `@media print { @page { size: ${w}mm ${h}mm; margin: 0; } #printArea img { width: ${w}mm; height: ${h}mm; } }`;
+}
+applyPaper();
+
+async function api(params) {
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 30000);
+  try {
+    const r = await fetch(url + '?' + new URLSearchParams(params), { signal: ctrl.signal, cache: 'no-store' });
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+async function poll() {
+  if (busy) return;
+  busy = true;
+  try {
+    const j = await api({ action: 'list', t: Date.now() });
+    if (!j.ok) throw new Error(j.error || '서버 응답 오류');
+    document.getElementById('lastCheck').textContent = '마지막 확인 ' + new Date().toLocaleTimeString('ko-KR');
+    if (!Array.isArray(j.list)) { setStatus('⚠ 서버가 옛 버전이에요 — qr-server/Code.gs 를 새 버전으로 다시 배포하세요 (설치방법.md)', 'err'); return; }
+    if (!j.list || !j.list.length) { setStatus('대기 중 — 휴대폰에서 사진을 보내면 바로 인쇄해요', 'ok'); return; }
+    for (const item of j.list) await printOne(item);
+    setStatus('대기 중 — 휴대폰에서 사진을 보내면 바로 인쇄해요', 'ok');
+  } catch (e) {
+    setStatus('서버에 연결 안 됨 — 인터넷·주소 확인 (자동으로 다시 시도해요)', 'err');
+    log('연결 실패: ' + e.message, '#c62828');
+  } finally { busy = false; }
+}
+async function printOne(item) {
+  setStatus(`📥 사진 받는 중… (${item.copies}장)`, 'work');
+  const j = await api({ action: 'get', id: item.id });
+  if (!j.ok || !j.image) throw new Error('사진을 받지 못했어요: ' + (j.error || ''));
+  const area = document.getElementById('printArea');
+  area.innerHTML = '';
+  const loads = [];
+  for (let i = 0; i < item.copies; i++) {
+    const im = document.createElement('img'); im.src = j.image; area.appendChild(im);
+    loads.push(new Promise(r => { im.onload = r; im.onerror = r; }));
+  }
+  await Promise.all(loads);
+  setStatus(`🖨 인쇄 중… ${item.copies}장 (1장당 약 1분)`, 'work');
+  await new Promise(r => setTimeout(r, 200));
+  window.print();   // --kiosk-printing 이면 대화상자 없이 기본 프린터로. 인쇄 큐에 들어가면 바로 돌아옴
+  printed += item.copies; store.set('station.count.' + today(), printed); document.getElementById('count').textContent = printed;
+  log(`인쇄 보냄: ${item.name} × ${item.copies}장`);
+  const d = await api({ action: 'done', id: item.id });
+  if (!d.ok) log('인쇄완료 표시 실패 (같은 사진이 또 나올 수 있어요): ' + (d.error || ''), '#c62828');
+  area.innerHTML = '';
+}
+function pollNow() { poll(); }
+timer = setInterval(poll, POLL_MS);
+poll();
+</script>
+</body>
+</html>

@@ -1,6 +1,9 @@
 # 모덕 네컷 (인생네컷 포토부스)
 
-단일 파일 웹앱(`index.html`) + 내장 에셋. 웹캠으로 찍어 캐논 SELPHY CP1500(100×148mm, 1181×1748px)에 인쇄하고, 완성 사진을 Google Drive 에 올려 QR 로 전달한다.
+웹앱 + 내장 에셋. 웹캠으로 찍어 캐논 SELPHY CP1500(100×148mm, 1181×1748px)에 인쇄하고, 완성 사진을 Google Drive 에 올려 QR 로 전달한다.
+
+- 구성: `index.html`(PC 부스) · `shared/booth-core.js`(규격·프레임·스티커·글꼴 목록·합성 — PC/휴대폰 공통, 전역 변수 방식) · `mobile/`(휴대폰 PWA, https 로 열어야 카메라 됨, 완성 사진을 Drive `네컷사진` 폴더에 `네컷_시각_N장.jpg` 로 올림 → 교사가 직접 출력, QR 표시) · `print-station/`(선택: PC 자동 인쇄 대기 화면, `인쇄대기.bat`, 휴대폰 고급 설정 autoQueue 켜야 함) · `qr-server/Code.gs`(Apps Script: QR 업로드 + 인쇄 대기열 list/get/done)
+- 프레임·스티커 문구를 바꿀 땐 `shared/booth-core.js` 만 고치면 PC·휴대폰 모두 반영. 휴대폰 글꼴은 4종만(`mobile/fonts.css`, 번호는 PC 와 동일 0·3·4·9), 캐릭터는 WebP 축소본(`mobile/characters/`). 다시 만들기: `python scripts/build-mobile-fonts.py`, `python scripts/build-mobile-characters.py`
 
 - 진행 상황과 할 일: `작업내역_및_할일.md` 를 먼저 읽을 것
 - 운영 설명: `사용설명서.md` / QR 서버: `qr-server/설치방법.md` / 에셋: `assets/README.md`

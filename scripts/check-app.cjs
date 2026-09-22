@@ -33,6 +33,7 @@ const sandbox = {document,window:{},console,Date,Math,Promise,localStorage:{getI
 };
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(path.join(root,'assets/characters/characters.js'),'utf8'),sandbox);
+vm.runInContext(fs.readFileSync(path.join(root,'shared/booth-core.js'),'utf8'),sandbox);   // PC·휴대폰 공통 코드
 const html = fs.readFileSync(path.join(root,'index.html'),'utf8');
 const script = html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
 vm.runInContext(script,sandbox);
