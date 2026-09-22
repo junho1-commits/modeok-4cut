@@ -80,29 +80,33 @@
   .frame-card.selected canvas { border-color:var(--accent); }
   .frame-card div { font-size:16px; margin-top:4px; }
 
-  /* 꾸미기 */
-  #deco { padding:calc(8px + var(--sat)) 0 0; gap:6px; }
-  .deco-top { display:flex; justify-content:space-between; align-items:center; padding:0 12px; }
-  .deco-top .tool { font-size:15px; min-height:40px; padding:6px 12px; border-radius:999px; border:2px solid #ddd; background:#fff; }
-  .deco-top select { font-size:15px; min-height:40px; padding:6px 8px; border-radius:999px; border:2px solid #ddd; background:#fff; max-width:44vw; }
-  .canvas-wrap { display:flex; justify-content:center; padding:0 12px; }
-  #stickerCanvas { max-width:100%; max-height:48dvh; width:auto; height:auto; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.2); background:#fff; touch-action:none; }
-  .sheet { background:#fff; border-radius:18px 18px 0 0; box-shadow:0 -6px 24px rgba(0,0,0,.08); padding:10px 0 calc(10px + var(--sab)); display:flex; flex-direction:column; gap:8px; flex:1; min-height:0; }
-  .tabs { display:flex; gap:8px; overflow-x:auto; padding:0 12px; flex-shrink:0; }
-  .tab { flex-shrink:0; font-size:15px; padding:8px 14px; border-radius:999px; border:2px solid var(--accent); background:#fff; color:var(--accent-dark); }
+  /* 꾸미기 — 사진을 크게, 스티커는 아래 한 줄(접을 수 있음) */
+  #deco { padding:calc(6px + var(--sat)) 0 0; gap:6px; }
+  .deco-top { display:flex; gap:6px; align-items:center; padding:0 10px; flex-shrink:0; }
+  .deco-top .tool { font-size:15px; min-height:42px; padding:0 12px; border-radius:999px; border:2px solid #ddd; background:#fff; white-space:nowrap; }
+  .deco-top .tool.on { background:#ffe3e9; border-color:var(--accent); }
+  .deco-top select { font-size:15px; min-height:42px; padding:0 8px; border-radius:999px; border:2px solid #ddd; background:#fff; flex:1; min-width:0; }
+  .canvas-wrap { flex:1; min-height:0; display:flex; justify-content:center; align-items:center; padding:0 10px; position:relative; }
+  #stickerCanvas { max-width:100%; max-height:100%; width:auto; height:auto; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.2); background:#fff; touch-action:none; }
+  .toast { position:absolute; left:50%; bottom:12px; transform:translateX(-50%); background:rgba(0,0,0,.72); color:#fff; font-size:14px; padding:8px 14px; border-radius:999px; white-space:nowrap; pointer-events:none; transition:opacity .4s; }
+  .toast.hide { opacity:0; }
+  .sheet { background:#fff; border-radius:16px 16px 0 0; box-shadow:0 -6px 24px rgba(0,0,0,.08); padding:8px 0 calc(8px + var(--sab)); display:flex; flex-direction:column; gap:8px; flex-shrink:0; }
+  #deco.collapsed .tabs, #deco.collapsed .palette { display:none; }
+  .tabs { display:flex; gap:8px; overflow-x:auto; padding:0 10px; flex-shrink:0; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar, .palette::-webkit-scrollbar { display:none; }
+  .tab { flex-shrink:0; font-size:15px; min-height:38px; padding:0 14px; border-radius:999px; border:2px solid var(--accent); background:#fff; color:var(--accent-dark); }
   .tab.on { background:var(--accent); color:#fff; }
-  .palette { display:grid; grid-auto-flow:column; grid-template-rows:repeat(2,auto); gap:8px; overflow-x:auto; padding:2px 12px 6px; flex:1; min-height:0; align-content:start; }
-  .stk { border:2px solid #eee; border-radius:12px; background:#fafafa; padding:6px 10px; min-width:64px; min-height:56px; display:flex; align-items:center; justify-content:center; }
+  .palette { display:flex; gap:8px; overflow-x:auto; padding:2px 10px 4px; height:86px; align-items:center; flex-shrink:0; scrollbar-width:none; }
+  .stk { flex-shrink:0; border:2px solid #eee; border-radius:12px; background:#fafafa; padding:4px 10px; min-width:64px; height:74px; display:flex; align-items:center; justify-content:center; }
   .stk:active { transform:scale(.94); }
-  .stk.emoji { font-size:34px; line-height:1; }
+  .stk.emoji { font-size:38px; line-height:1; }
   .stk.label { font-size:15px; font-weight:700; color:#fff; white-space:nowrap; }
-  .stk.character img { height:64px; width:auto; }
+  .stk.character img { height:66px; width:auto; }
+  .stk.text-btn { background:#333; color:#fff; font-size:15px; font-weight:700; flex-direction:column; gap:2px; border-color:#333; }
   .stk:disabled { opacity:.35; }
-  .custom { display:flex; gap:8px; padding:0 12px; flex-shrink:0; }
-  .custom input { flex:1; font-size:17px; padding:10px 12px; border:2px solid #e5e5e5; border-radius:12px; min-width:0; }
-  .custom button { font-size:16px; font-weight:700; padding:0 16px; border-radius:12px; border:none; background:#333; color:#fff; }
-  .deco-actions { display:flex; gap:10px; padding:0 12px; flex-shrink:0; }
-  #assetStatus { font-size:13px; color:var(--muted); padding:0 12px; min-height:16px; }
+  .deco-actions { display:flex; gap:10px; padding:0 10px; flex-shrink:0; }
+  #assetStatus { font-size:13px; color:var(--muted); padding:0 12px; }
+  #assetStatus:empty { display:none; }
 
   /* 완성 */
   #done { overflow-y:auto; }
@@ -191,18 +195,17 @@
   <div class="deco-top">
     <button class="tool" onclick="stkDelete()">✕ 지우기</button>
     <select id="fontSelect" onchange="setStickerFont(this.value)" aria-label="문구 글꼴"></select>
-    <button class="tool" onclick="stkClear()">모두 지우기</button>
+    <button class="tool" onclick="stkClear()">🗑 전체</button>
+    <button class="tool" id="sheetToggle" onclick="toggleSheet()">스티커 ▾</button>
   </div>
-  <div class="canvas-wrap"><canvas id="stickerCanvas" width="1181" height="1748"></canvas></div>
-  <p class="sub" style="font-size:13px">한 손가락: 옮기기 · 두 손가락: 크기·회전 · ↻ 손잡이: 돌리기</p>
+  <div class="canvas-wrap">
+    <canvas id="stickerCanvas" width="1181" height="1748"></canvas>
+    <div class="toast hide" id="decoToast">한 손가락: 옮기기 · 두 손가락: 크기·회전</div>
+  </div>
   <div class="sheet">
     <div class="tabs" id="stickerTabs"></div>
     <div id="assetStatus"></div>
     <div class="palette" id="stickerPalette"></div>
-    <div class="custom">
-      <input id="customStickerText" maxlength="24" placeholder="나만의 문구" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomText()}">
-      <button onclick="addCustomText()">추가</button>
-    </div>
     <div class="deco-actions">
       <button class="btn secondary small" onclick="stkClear(); compose()">건너뛰기</button>
       <button class="btn grow" onclick="compose()">완성하기 →</button>
@@ -547,9 +550,11 @@ async function goDeco() {
   go('deco');
   const ti = STICKER_THEMES.findIndex(t => t.name === S.decoTheme);
   decoTab = ti >= 0 ? ti : 0;
+  toggleSheet(false);
   await fontReady;
   renderStickerTabs();
   redrawDeco();
+  showToast('한 손가락: 옮기기 · 두 손가락: 크기·회전');
   document.getElementById('assetStatus').textContent = '캐릭터 스티커 내려받는 중…';
   await loadCharacters();
   if (!document.getElementById('deco').classList.contains('active')) return;
@@ -568,6 +573,7 @@ function renderStickerTabs() {
   });
   const pal = document.getElementById('stickerPalette');
   pal.innerHTML = '';
+  const tb = document.createElement('button'); tb.type = 'button'; tb.className = 'stk text-btn'; tb.innerHTML = '✏️<span>문구</span>'; tb.onclick = addCustomText; pal.appendChild(tb);
   STICKER_THEMES[decoTab].items.forEach(it => {
     const d = document.createElement('button'); d.type = 'button';
     if (it[0] === 'i') {
@@ -597,11 +603,21 @@ function addSticker(it) {
   if (navigator.vibrate) navigator.vibrate(15);
 }
 function addCustomText() {
-  const input = document.getElementById('customStickerText');
-  const value = input.value.trim();
-  if (!value) { input.focus(); return; }
+  const value = (prompt('넣을 문구를 입력하세요 (24자까지)') || '').trim().slice(0, 24);
+  if (!value) return;
   addSticker(['t', value, ['#e3496c', '#315b78', '#4e7a63', '#76528b'][stickers.length % 4]]);
-  input.value = ''; input.blur();
+}
+function toggleSheet(force) {   // 스티커 줄 접기 → 사진이 화면을 거의 다 차지해 손으로 다루기 쉬움
+  const d = document.getElementById('deco');
+  const collapsed = typeof force === 'boolean' ? force : !d.classList.contains('collapsed');
+  d.classList.toggle('collapsed', collapsed);
+  const b = document.getElementById('sheetToggle');
+  b.textContent = collapsed ? '스티커 ▴' : '스티커 ▾'; b.classList.toggle('on', collapsed);
+}
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('decoToast'); t.textContent = msg; t.classList.remove('hide');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add('hide'), 3000);
 }
 function clampSticker(s) {
   const b = stickerBox(document.getElementById('stickerCanvas').getContext('2d'), s);
