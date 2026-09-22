@@ -385,11 +385,14 @@ async function testServer(fromPanel) {
   const el = document.getElementById(fromPanel ? 'serverTestMsg' : 'serverStatus');
   if (!url) { el.textContent = '드라이브 업로드 주소가 없어요 (고급 설정)'; return; }
   el.textContent = '드라이브 연결 확인 중…';
-  try {
-    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 10000);
-    const j = await (await fetch(url, { signal: ctrl.signal })).json(); clearTimeout(t);
-    el.textContent = j.ok ? `✅ 드라이브 연결됨 (${j.folder} 폴더)` : '서버 응답이 이상해요';
-  } catch (e) { el.textContent = '❌ 드라이브에 연결 안 됨 (인터넷·주소 확인)'; }
+  let j = null;
+  for (let attempt = 0; attempt < 2 && !j; attempt++) {   // 구글이 가끔 JSON 대신 안내 페이지를 주므로 한 번 더 시도
+    try {
+      const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 10000);
+      j = await (await fetch(url + '?ping=' + Date.now(), { signal: ctrl.signal, cache: 'no-store' })).json(); clearTimeout(t);
+    } catch (e) { j = null; }
+  }
+  el.textContent = !j ? '❌ 드라이브에 연결 안 됨 (인터넷·주소 확인)' : j.ok ? `✅ 드라이브 연결됨 (${j.folder} 폴더)` : '서버 응답이 이상해요';
 }
 
 /* ---------- 카메라 ---------- */
@@ -733,7 +736,7 @@ async function submitPhoto() {
       body: JSON.stringify({ image: resultDataUrl, submit: true, copies, print: !!S.autoQueue,
         name: `${mmdd}-${String(fallbackNo).padStart(3, '0')}_${copies}장` }) });   // name 은 옛 서버용 (새 서버는 직접 번호를 매김)
     clearTimeout(t);
-    const j = await res.json();
+    let j; try { j = await res.json(); } catch (e) { throw new Error('서버가 이상한 응답을 보냈어요'); }
     if (!j.ok) throw new Error(j.error || '서버 오류');
     const number = j.number || fallbackNo;
     document.getElementById('photoNumber').textContent = number + '번';
