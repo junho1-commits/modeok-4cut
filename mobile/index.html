@@ -117,6 +117,9 @@
   #numberBox { text-align:center; background:#fff; border-radius:16px; padding:10px 14px; box-shadow:0 6px 20px rgba(0,0,0,.08); }
   .big-number { font-size:84px; font-weight:800; line-height:1.05; color:var(--accent-dark); }
   #sendStatus { text-align:center; font-size:17px; min-height:24px; color:var(--accent-dark); }
+  .waiting { background:#fff; border-radius:16px; padding:16px 14px; box-shadow:0 6px 20px rgba(0,0,0,.08); font-size:17px; line-height:1.5; color:#444; }
+  .spinner { width:38px; height:38px; margin:0 auto 10px; border-radius:50%; border:5px solid #ffd6e0; border-top-color:var(--accent); animation:spin .9s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
   .hint { text-align:center; font-size:14px; color:var(--muted); }
 
   /* 고급 설정 */
@@ -729,7 +732,9 @@ async function submitPhoto() {
   const copies = copiesPick;
   document.getElementById('copyAsk').hidden = true;
   const st = document.getElementById('sendStatus'), retry = document.getElementById('retryBtn');
-  st.textContent = `📡 사진을 제출하는 중… (${copies}장)`; retry.hidden = true;
+  retry.hidden = true;
+  // 제출에 10~20초쯤 걸리므로 기다려 달라는 안내 + 진행 표시
+  st.innerHTML = `<div class="waiting"><div class="spinner"></div><b>사진 번호를 받는 중이에요…</b><br>10~20초 정도 걸려요. 화면을 끄거나 나가지 말고 잠시만 기다려 주세요 🙏</div>`;
   try {
     const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 40000);
     const d = new Date(), mmdd = String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
