@@ -27,6 +27,7 @@ function json_(obj) {
 //   action=list     : 인쇄 대기 사진 목록 (오래된 순) [{ id, name, copies, created }]
 //   action=get&id=… : 사진 한 장을 data URL 로 (인쇄 대기 화면이 <img> 에 넣고 인쇄)
 //   action=done&id=…: 인쇄 완료 표시 (이름 print_ → done_)
+//   action=resetNumber: 오늘 사진 번호를 1번부터 다시
 function doGet(e) {
   try {
     const q = (e && e.parameter) || {};
@@ -50,7 +51,11 @@ function doGet(e) {
       if (f.getName().indexOf('print_') === 0) f.setName('done_' + f.getName().slice(6));
       return json_({ ok: true });
     }
-    return json_({ ok: true, folder: FOLDER_NAME, queue: true });   // queue: 인쇄 대기 기능이 있는 배포
+    if (q.action === 'resetNumber') {   // 오늘 사진 번호를 1번부터 다시 (휴대폰 고급 설정 버튼)
+      PropertiesService.getScriptProperties().deleteProperty('seq_' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyyMMdd'));
+      return json_({ ok: true });
+    }
+    return json_({ ok: true, folder: FOLDER_NAME, queue: true, numbering: true });   // numbering: 사진 제출 번호 기능이 있는 배포
   } catch (err) {
     return json_({ ok: false, error: String(err) });
   }

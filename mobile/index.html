@@ -233,6 +233,7 @@
     <div class="sub">내 사진 번호</div>
     <div class="big-number" id="photoNumber">-</div>
     <div class="sub">선생님께 이 번호를 말해 주세요</div>
+    <div class="hint" id="savedName" style="font-size:12px"></div>
   </div>
   <div id="sendStatus"></div>
   <div class="row">
@@ -255,6 +256,7 @@
     <label>카운트다운(초) <input id="setCount" type="number" min="1" max="10" inputmode="numeric"></label>
     <label>드라이브 업로드 주소 <small>PC 부스의 QR 업로드 주소와 같은 Apps Script 주소 (qr-server/설치방법.md)</small> <input id="setServer" type="text" placeholder="https://script.google.com/macros/s/…/exec"></label>
     <div class="row"><button class="btn secondary small" onclick="testServer(true)">연결 확인</button> <span id="serverTestMsg" class="server-status"></span></div>
+    <div class="row"><button class="btn secondary small" onclick="resetNumber()">🔢 오늘 번호 1번부터 다시</button> <span id="resetMsg" class="server-status"></span></div>
     <label style="flex-direction:row;align-items:center;gap:10px"><input id="setAutoQueue" type="checkbox" style="width:24px;height:24px"> PC 자동 인쇄 대기열로 보내기 <small>(보통 끔. PC 에서 인쇄대기.bat 을 켜 둘 때만 — Code.gs 재배포 필요)</small></label>
     <div class="row">
       <button class="btn small" onclick="saveSettings()">저장</button>
@@ -715,7 +717,7 @@ function pickCopies(n) {
   copiesPick = n;
   document.querySelectorAll('#copyBtns .btn').forEach((b, i) => b.classList.toggle('on', i + 1 === n));
 }
-// 서버가 옛 버전이라 번호를 안 주면 휴대폰이 스스로 매김 (그날 1번부터, 이 폰 기준 — 폰이 여러 대면 겹칠 수 있음)
+// 옛 서버(번호 기능 없음)용 예비 이름에만 쓰는 폰 자체 순번. 화면에 보여주는 번호는 항상 서버가 저장한 파일 이름에서 읽음
 function localNumber() {
   const day = new Date().toISOString().slice(0, 10);
   if (S.seqDay !== day) { S.seqDay = day; S.seq = 0; }
@@ -738,10 +740,14 @@ async function submitPhoto() {
     clearTimeout(t);
     let j; try { j = await res.json(); } catch (e) { throw new Error('서버가 이상한 응답을 보냈어요'); }
     if (!j.ok) throw new Error(j.error || '서버 오류');
-    const number = j.number || fallbackNo;
-    document.getElementById('photoNumber').textContent = number + '번';
+    // 번호는 서버가 실제로 저장한 파일 이름(0922-005_2장.jpg)에서 읽음 → 폰 화면과 드라이브가 절대 어긋나지 않음
+    const m = /-(\d{3})_/.exec(j.name || '');
+    const number = j.number || (m ? +m[1] : null);
+    document.getElementById('photoNumber').textContent = number ? number + '번' : '번호 없음';
+    document.getElementById('savedName').textContent = j.name ? '드라이브 파일: ' + j.name : '';
     document.getElementById('numberBox').hidden = false;
-    st.textContent = `✅ 제출 완료! 선생님이 ${copies}장 뽑아 줄 거예요`;
+    st.textContent = number ? `✅ 제출 완료! 선생님이 ${copies}장 뽑아 줄 거예요`
+      : '⚠ 저장은 됐지만 서버가 번호를 안 줬어요 — Apps Script 를 새 버전으로 다시 배포하세요';
     if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
     let left = 30;
     document.getElementById('nextBtn').textContent = '다음 친구 →';
@@ -765,6 +771,16 @@ async function shareImage() {
 }
 
 /* ---------- 고급 설정 ---------- */
+async function resetNumber() {
+  const url = document.getElementById('setServer').value.trim() || S.serverUrl;
+  const msg = document.getElementById('resetMsg');
+  if (!url || !confirm('오늘 사진 번호를 1번부터 다시 시작할까요?\n(드라이브에 이미 같은 번호의 사진이 있으면 이름이 겹칠 수 있어요. 먼저 정리해 주세요)')) return;
+  msg.textContent = '초기화 중…';
+  try {
+    const j = await (await fetch(url + '?action=resetNumber&t=' + Date.now(), { cache: 'no-store' })).json();
+    msg.textContent = j.ok ? '✅ 다음 제출부터 1번' : '실패: ' + (j.error || '');
+  } catch (e) { msg.textContent = '❌ 서버에 연결 안 됨'; }
+}
 function openSettings() {
   document.getElementById('setFacing').value = S.facing;
   document.getElementById('setCount').value = S.countdown;
