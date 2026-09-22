@@ -28,6 +28,7 @@ function json_(obj) {
 //   action=get&id=… : 사진 한 장을 data URL 로 (인쇄 대기 화면이 <img> 에 넣고 인쇄)
 //   action=done&id=…: 인쇄 완료 표시 (이름 print_ → done_)
 //   action=resetNumber: 오늘 사진 번호를 1번부터 다시
+//   action=status&token=…: 그 token 으로 제출된 사진의 결과 (6시간 안) — 응답이 끊겼을 때 폰이 확인용
 function doGet(e) {
   try {
     const q = (e && e.parameter) || {};
@@ -51,6 +52,10 @@ function doGet(e) {
       if (f.getName().indexOf('print_') === 0) f.setName('done_' + f.getName().slice(6));
       return json_({ ok: true });
     }
+    if (q.action === 'status') {   // 휴대폰이 응답을 못 받았을 때 "내 사진 들어갔나요?" 확인 (token 은 사진마다 하나)
+      const hit = CacheService.getScriptCache().get('tok_' + String(q.token || '').replace(/[^\w-]/g, '').slice(0, 64));
+      return hit ? json_(JSON.parse(hit)) : json_({ ok: false, pending: true });
+    }
     if (q.action === 'resetNumber') {   // 오늘 사진 번호를 1번부터 다시 (휴대폰 고급 설정 버튼)
       PropertiesService.getScriptProperties().deleteProperty('seq_' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyyMMdd'));
       return json_({ ok: true });
@@ -69,6 +74,10 @@ function doPost(e) {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     const m = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(body.image || '');
     if (!m) return json_({ ok: false, error: 'image 필드가 비었거나 JPEG 데이터 URL 이 아니에요' });
+    // 같은 사진(token)이 다시 오면 새로 저장하지 않고 아까 결과를 그대로 돌려줌 (응답이 끊겨 폰이 다시 보내도 번호가 두 개 생기지 않게)
+    const token = String(body.token || '').replace(/[^\w-]/g, '').slice(0, 64);
+    const cache = CacheService.getScriptCache();
+    if (token) { const hit = cache.get('tok_' + token); if (hit) return json_(JSON.parse(hit)); }
     let name = String(body.name || 'photo').replace(/[^\w가-힣-]/g, '_').slice(0, 60);
     const copies = Math.max(1, Math.min(4, Number(body.copies) || 1));
     let number = null;
@@ -87,13 +96,15 @@ function doPost(e) {
     const blob = Utilities.newBlob(Utilities.base64Decode(m[1]), 'image/jpeg', name);
     const file = folder_().createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    return json_({
+    const result = {
       ok: true,
       number: number,            // 사진 제출이면 학생에게 알려줄 번호
       name: name,
       id: file.getId(),
       url: 'https://drive.google.com/file/d/' + file.getId() + '/view',   // 휴대폰에서 열면 미리보기 + 다운로드 버튼
-    });
+    };
+    if (token) cache.put('tok_' + token, JSON.stringify(result), 21600);   // 6시간 보관
+    return json_(result);
   } catch (err) {
     return json_({ ok: false, error: String(err) });
   }

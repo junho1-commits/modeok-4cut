@@ -709,6 +709,7 @@ function compose() {
   document.getElementById('resultImg').src = resultDataUrl;
   document.getElementById('copyAsk').hidden = false;
   document.getElementById('numberBox').hidden = true;
+  submitToken = '';   // 새 사진 → 새 표
   pickCopies(1);
   document.getElementById('sendStatus').textContent = S.serverUrl ? '' : '드라이브 주소가 없어 저장·공유만 할 수 있어요';
   document.getElementById('retryBtn').hidden = true;
@@ -727,42 +728,60 @@ function localNumber() {
   S.seq = (S.seq || 0) + 1; saveS();
   return S.seq;
 }
+let submitToken = '';   // 사진 하나에 표 하나 — 다시 보내도 서버가 같은 번호를 돌려줌
+function newToken() { return (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2)); }
+async function fetchJson(url, opts, ms) {
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), ms);
+  try { return await (await fetch(url, Object.assign({ signal: ctrl.signal, cache: 'no-store' }, opts))).json(); }
+  finally { clearTimeout(t); }
+}
+// 응답이 끊겼어도 서버엔 저장됐을 수 있으니 "내 사진 들어갔나요?" 를 몇 번 물어봄
+async function checkStatus(token, tries) {
+  for (let i = 0; i < tries; i++) {
+    await sleep(3000);
+    try { const j = await fetchJson(S.serverUrl + '?action=status&token=' + token + '&t=' + Date.now(), {}, 15000); if (j && j.ok && (j.name || j.number)) return j; } catch (e) {}   // 옛 서버의 일반 응답(ok 만 있음)은 결과 아님
+  }
+  return null;
+}
 async function submitPhoto() {
   if (!resultDataUrl || !S.serverUrl) return;
   const copies = copiesPick;
+  if (!submitToken) submitToken = newToken();
   document.getElementById('copyAsk').hidden = true;
   const st = document.getElementById('sendStatus'), retry = document.getElementById('retryBtn');
   retry.hidden = true;
-  // 제출에 10~20초쯤 걸리므로 기다려 달라는 안내 + 진행 표시
-  st.innerHTML = `<div class="waiting"><div class="spinner"></div><b>사진 번호를 받는 중이에요…</b><br>10~20초 정도 걸려요. 화면을 끄거나 나가지 말고 잠시만 기다려 주세요 🙏</div>`;
-  try {
-    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 40000);
-    const d = new Date(), mmdd = String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
-    const fallbackNo = localNumber();
-    const res = await fetch(S.serverUrl, { method: 'POST', signal: ctrl.signal, headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ image: resultDataUrl, submit: true, copies, print: !!S.autoQueue,
-        name: `${mmdd}-${String(fallbackNo).padStart(3, '0')}_${copies}장` }) });   // name 은 옛 서버용 (새 서버는 직접 번호를 매김)
-    clearTimeout(t);
-    let j; try { j = await res.json(); } catch (e) { throw new Error('서버가 이상한 응답을 보냈어요'); }
-    if (!j.ok) throw new Error(j.error || '서버 오류');
-    // 번호는 서버가 실제로 저장한 파일 이름(0922-005_2장.jpg)에서 읽음 → 폰 화면과 드라이브가 절대 어긋나지 않음
-    const m = /-(\d{3})_/.exec(j.name || '');
-    const number = j.number || (m ? +m[1] : null);
-    document.getElementById('photoNumber').textContent = number ? number + '번' : '번호 없음';
-    document.getElementById('savedName').textContent = j.name ? '드라이브 파일: ' + j.name : '';
-    document.getElementById('numberBox').hidden = false;
-    st.textContent = number ? `✅ 제출 완료! 선생님이 ${copies}장 뽑아 줄 거예요`
-      : '⚠ 저장은 됐지만 서버가 번호를 안 줬어요 — Apps Script 를 새 버전으로 다시 배포하세요';
-    if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
-    let left = 30;
-    document.getElementById('nextBtn').textContent = '다음 친구 →';
-    const hint = document.getElementById('autoBack');
-    hint.textContent = `${left}초 후 다시 촬영을 시작해요`;
-    autoBackTimer = setInterval(() => { left--; hint.textContent = `${left}초 후 다시 촬영을 시작해요`; if (left <= 0) { clearInterval(autoBackTimer); startShoot(); } }, 1000);
-  } catch (e) {
-    st.textContent = '❌ 제출하지 못했어요 — 인터넷을 확인하고 다시 제출';
-    retry.hidden = false;
+  const wait = msg => { st.innerHTML = `<div class="waiting"><div class="spinner"></div><b>${msg}</b><br>10~20초 정도 걸려요. 화면을 끄거나 나가지 말고 잠시만 기다려 주세요 🙏</div>`; };
+  wait('사진 번호를 받는 중이에요…');
+  const d = new Date(), mmdd = String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  const fallbackNo = localNumber();
+  const payload = JSON.stringify({ image: resultDataUrl, submit: true, copies, print: !!S.autoQueue, token: submitToken,
+    name: `${mmdd}-${String(fallbackNo).padStart(3, '0')}_${copies}장` });   // name 은 옛 서버용 (새 서버는 직접 번호를 매김)
+  let j = null;
+  for (let attempt = 0; attempt < 2 && !j; attempt++) {
+    try {
+      j = await fetchJson(S.serverUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: payload }, 60000);
+      if (j && !j.ok) { const err = j.error; j = null; if (attempt === 1) { st.textContent = '❌ 서버 오류: ' + err; retry.hidden = false; return; } }
+    } catch (e) {
+      // 구글이 가끔 응답을 깨뜨림 → 서버에 들어갔는지 확인하고, 없으면 같은 표로 한 번 더 보냄 (중복 저장 안 됨)
+      wait('응답이 늦어요, 사진이 들어갔는지 확인 중…');
+      j = await checkStatus(submitToken, 3);
+    }
   }
+  if (!j) { st.textContent = '❌ 제출하지 못했어요 — 인터넷을 확인하고 다시 제출 (같은 번호로 이어져요)'; retry.hidden = false; return; }
+  // 번호는 서버가 실제로 저장한 파일 이름(0922-005_2장.jpg)에서 읽음 → 폰 화면과 드라이브가 절대 어긋나지 않음
+  const m = /-(\d{3})_/.exec(j.name || '');
+  const number = j.number || (m ? +m[1] : null);
+  document.getElementById('photoNumber').textContent = number ? number + '번' : '번호 없음';
+  document.getElementById('savedName').textContent = j.name ? '드라이브 파일: ' + j.name : '';
+  document.getElementById('numberBox').hidden = false;
+  st.textContent = number ? `✅ 제출 완료! 선생님이 ${copies}장 뽑아 줄 거예요`
+    : '⚠ 저장은 됐지만 서버가 번호를 안 줬어요 — Apps Script 를 새 버전으로 다시 배포하세요';
+  if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
+  let left = 30;
+  document.getElementById('nextBtn').textContent = '다음 친구 →';
+  const hint = document.getElementById('autoBack');
+  hint.textContent = `${left}초 후 다시 촬영을 시작해요`;
+  autoBackTimer = setInterval(() => { left--; hint.textContent = `${left}초 후 다시 촬영을 시작해요`; if (left <= 0) { clearInterval(autoBackTimer); startShoot(); } }, 1000);
 }
 async function shareImage() {
   if (!resultDataUrl) return;
