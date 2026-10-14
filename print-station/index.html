@@ -67,10 +67,11 @@
      <img> 에 넣고 window.print() (인쇄대기.bat 이 --kiosk-printing 으로 열어 대화상자 없이 기본 프린터로 감)
    - 인쇄를 보낸 뒤 ?action=done 으로 표시해 두 번 뽑히지 않게 함
    ============================================================ */
-const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbxR9QIIfbfP4c2pakyOtAcaucuSNNj5D-hFw7sHzTRZ1PfTS1q_y8J2jkdAmOHiOdeZ/exec';
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbw161azvmXkXPJRtBfTclq9ZR34adGaql_0JJDuVpyAOFVzyJ2xj0syJiWV1FBvaakL/exec';
 const POLL_MS = 4000;
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
 let url = store.get('station.url') || DEFAULT_URL;
+if (url.includes('AKfycbxR9QIIfbfP4c2pakyOtAcaucuSNNj5D-hFw7sHzTRZ1PfTS1q_y8J2jkdAmOHiOdeZ')) url = DEFAULT_URL;   // 옛 Apps Script 주소가 저장돼 있으면 새 주소로
 let paper = store.get('station.paper') || 'selphy';
 let busy = false, printed = +(store.get('station.count.' + today()) || 0), timer = null;
 document.getElementById('serverUrl').value = url;

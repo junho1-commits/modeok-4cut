@@ -5,7 +5,8 @@ const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..');
 const elements = new Map(), intervals = new Map(), documentEvents = {};
 let nextInterval = 1, imageDraws = 0;
-const ctx = new Proxy({ measureText: text => ({width:text.length * 38}), drawImage: () => imageDraws++ }, {
+const ctx = new Proxy({ measureText: text => ({width:text.length * 38}), drawImage: () => imageDraws++,
+  createLinearGradient: () => ({addColorStop(){}}), createRadialGradient: () => ({addColorStop(){}}) }, {
   get(target,key) { return key in target ? target[key] : () => {}; },
 });
 function element(id='') {

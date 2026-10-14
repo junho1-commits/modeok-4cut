@@ -282,7 +282,7 @@ const DEFAULTS = {
   title: '모덕초등학교', footer: '', titleFont: 0, showDate: true, shots: 4, frameId: '', decoTheme: '졸업',
   countdown: 3, facing: 'user', autoQueue: false, ver: 1,
   // PC 와 같은 Apps Script 주소 (qr-server/). 비우면 인쇄 보내기 꺼짐
-  serverUrl: 'https://script.google.com/macros/s/AKfycbxR9QIIfbfP4c2pakyOtAcaucuSNNj5D-hFw7sHzTRZ1PfTS1q_y8J2jkdAmOHiOdeZ/exec',
+  serverUrl: 'https://script.google.com/macros/s/AKfycbw161azvmXkXPJRtBfTclq9ZR34adGaql_0JJDuVpyAOFVzyJ2xj0syJiWV1FBvaakL/exec',
 };
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -290,6 +290,7 @@ const store = {
 };
 let S = Object.assign({}, DEFAULTS, JSON.parse(store.get('booth.mobile.settings') || '{}'));
 if (!MOBILE_FONTS.includes(S.titleFont)) S.titleFont = 0;
+if (S.serverUrl && S.serverUrl.includes('AKfycbxR9QIIfbfP4c2pakyOtAcaucuSNNj5D-hFw7sHzTRZ1PfTS1q_y8J2jkdAmOHiOdeZ')) S.serverUrl = DEFAULTS.serverUrl;   // 옛 Apps Script 주소가 저장돼 있으면 새 주소로
 const saveS = () => store.set('booth.mobile.settings', JSON.stringify(S));
 
 var stream = null, shots = [], picked = [], shotCount = 4, selectedFrame = FRAMES[0], resultDataUrl = null, autoBackTimer = null, copiesPick = 1;
