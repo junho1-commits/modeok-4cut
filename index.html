@@ -118,41 +118,49 @@
   @keyframes timerPulse { to { transform: scale(1.06); } }
 
   /* 결과 */
-  .result-main { display: flex; align-items: center; justify-content: center; gap: 32px; max-width: 1280px; margin: 0 auto; }
-  #resultImg { height: 60vh; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
-  .result-side { width: 380px; display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
-  .info-card { background: #fff; border-radius: 18px; padding: 16px 20px; box-shadow: 0 8px 28px rgba(0,0,0,.08); text-align: center; }
+  #result {
+    overflow-y: auto;
+    overflow-x: hidden;
+    justify-content: flex-start;
+    padding: 24px 20px 60px;
+    gap: 14px;
+  }
+  .result-main { display: flex; align-items: flex-start; justify-content: center; gap: 28px; max-width: 1200px; margin: 0 auto; width: 100%; }
+  #resultImg { height: 54vh; max-height: 520px; width: auto; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.25); flex-shrink: 0; }
+  .result-side { width: 380px; display: flex; flex-direction: column; gap: 10px; align-items: stretch; flex-shrink: 0; }
+  .info-card { background: #fff; border-radius: 18px; padding: 14px 18px; box-shadow: 0 8px 28px rgba(0,0,0,.08); text-align: center; }
   .info-card[hidden] { display: none; }
 
-  #copyAsk { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-  .ask-title { margin: 0; font-size: 23px; color: var(--accent-dark); font-weight: 800; }
+  #copyAsk { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .ask-title { margin: 0; font-size: 22px; color: var(--accent-dark); font-weight: 800; }
   .ask-sub { margin: 0; font-size: 15px; color: var(--muted); }
   .copies { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; margin-top: 4px; }
-  .copies .btn { font-size: 22px; font-weight: 800; padding: 14px 0; border-radius: 12px; }
+  .copies .btn { font-size: 22px; font-weight: 800; padding: 12px 0; border-radius: 12px; }
 
-  #waitBox { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 26px 16px; }
-  .spinner { width: 40px; height: 40px; margin: 0 auto 12px; border-radius: 50%; border: 5px solid #ffd6e0; border-top-color: var(--accent); animation: spin .9s linear infinite; }
+  #waitBox { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 16px; }
+  .spinner { width: 38px; height: 38px; margin: 0 auto 10px; border-radius: 50%; border: 5px solid #ffd6e0; border-top-color: var(--accent); animation: spin .9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .number-card { background: linear-gradient(145deg, #fff, #fff8fa); border: 2px solid #ffd6e0; }
-  .num-header { font-size: 15px; font-weight: 700; color: #888; letter-spacing: 1px; }
-  .big-number { font-size: 82px; font-weight: 900; line-height: 1; color: var(--accent); margin: 6px 0; letter-spacing: -2px; }
-  .num-guide { font-size: 17px; font-weight: 700; color: var(--fg); background: #fff; padding: 9px 12px; border-radius: 12px; border: 1px solid #ffd6e0; }
+  .num-header { font-size: 14px; font-weight: 700; color: #888; letter-spacing: 1px; }
+  .big-number { font-size: 76px; font-weight: 900; line-height: 1; color: var(--accent); margin: 4px 0; letter-spacing: -2px; }
+  .num-guide { font-size: 16px; font-weight: 700; color: var(--fg); background: #fff; padding: 8px 12px; border-radius: 12px; border: 1px solid #ffd6e0; }
   .num-guide b { color: var(--accent-dark); }
-  .num-filename { font-size: 12px; color: #888; margin-top: 6px; word-break: break-all; }
+  .num-filename { font-size: 12px; color: #888; margin-top: 5px; word-break: break-all; }
 
-  .qr-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 16px; }
-  .qr-title { font-size: 16px; font-weight: 700; color: var(--accent-dark); }
-  #qrImg { width: 140px; height: 140px; image-rendering: pixelated; background: #f3f3f3; border-radius: 8px; }
+  .qr-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 14px; }
+  .qr-title { font-size: 15px; font-weight: 700; color: var(--accent-dark); }
+  #qrImg { width: 120px; height: 120px; image-rendering: pixelated; background: #f3f3f3; border-radius: 8px; }
   #qrImg.loading { animation: qrPulse 1s infinite alternate; }
   @keyframes qrPulse { to { opacity: .35; } }
-  #qrStatus { font-size: 14px; color: var(--muted); text-align: center; min-height: 20px; }
+  #qrStatus { font-size: 13px; color: var(--muted); text-align: center; min-height: 18px; }
   #qrStatus.err { color: #d9435f; }
-  #printing { font-size: 20px; color: var(--accent-dark); min-height: 26px; }
+  #printing { font-size: 18px; color: var(--accent-dark); min-height: 22px; }
   #saveMenu { padding: 10px 16px; background: #fff; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.12); }
   #saveMenu[hidden] { display: none; }
   #saveMenu .btn { line-height: 1.25; }
   #saveMenu small { font-size: 13px; font-weight: 500; opacity: .8; }
+  .result-timer-hint { font-size: 16px; font-weight: 700; color: var(--accent-dark); background: rgba(255,255,255,.92); padding: 8px 20px; border-radius: 999px; box-shadow: 0 4px 14px rgba(0,0,0,.06); }
 
   /* 설정 */
   #settings { position: absolute; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 50; }
@@ -276,7 +284,7 @@
   </div>
 </section>
 
-<!-- 6. 결과 / 인쇄 매수 선택 -->
+<!-- 6. 결과 / 사진 번호 발급 -->
 <section id="result" class="screen">
   <div class="result-main">
     <img id="resultImg" alt="결과 사진">
@@ -292,14 +300,14 @@
           <button class="btn" onclick="submitAndGetNumber(3)">3장</button>
           <button class="btn" onclick="submitAndGetNumber(4)">4장</button>
         </div>
-        <small class="hint" style="margin-top:4px">키보드 1~4 숫자키 또는 Enter</small>
+        <small style="color:var(--muted);font-size:13px;margin-top:6px;display:block">키보드 1~4 숫자키 또는 Enter</small>
       </div>
 
       <!-- 2. 대기 화면 -->
       <div id="waitBox" class="info-card" hidden>
         <div class="spinner"></div>
-        <b style="font-size:20px;color:var(--accent-dark)">구글 드라이브에 저장 중…</b>
-        <p style="margin:8px 0 0;font-size:14px;color:#666">사진 번호를 받고 있어요. 잠시만 기다려주세요</p>
+        <b style="font-size:19px;color:var(--accent-dark)">구글 드라이브에 저장 중…</b>
+        <p style="margin:6px 0 0;font-size:14px;color:#666">사진 번호를 받고 있어요. 잠시만 기다려주세요</p>
       </div>
 
       <!-- 3. 사진 번호 발급 완료 -->
@@ -322,11 +330,15 @@
 
   <div id="printing"></div>
 
-  <div class="row" style="margin-top:16px">
-    <button class="btn" id="nextTeamBtn" onclick="startShoot()">다음 친구 준비 완료 →</button>
+  <!-- 자동 복귀 안내 -->
+  <div id="autoBack" class="result-timer-hint"></div>
+
+  <!-- 하단 액션 버튼들 (처음 화면으로 버튼을 가장 눈에 띄게!) -->
+  <div class="row" style="margin-top:4px">
+    <button class="btn" style="background:var(--accent-dark);font-size:22px;padding:12px 32px" onclick="go('idle')">🏠 처음 화면으로 (완료)</button>
+    <button class="btn secondary" id="nextTeamBtn" style="font-size:20px;padding:12px 28px" onclick="startShoot()">📸 다음 팀 바로 촬영 →</button>
     <button class="btn secondary small" id="directPrintBtn" onclick="doDirectPrint()" title="이 PC에 연결된 프린터로 바로 인쇄">🖨 이 PC에서 바로 인쇄</button>
     <button class="btn secondary small" onclick="toggleSaveMenu()">💾 파일 저장</button>
-    <button class="btn secondary small" onclick="go('idle')">행사 세팅으로</button>
   </div>
   <div id="saveMenu" class="row" hidden>
     <span class="sub">어떤 형식으로 저장할까요?</span>
@@ -335,7 +347,6 @@
     <button class="btn small secondary" id="driveLinkBtn" onclick="openDriveLink()" hidden>☁ 드라이브 사진 열기<br><small>웹에서 보기</small></button>
     <button class="btn secondary small" onclick="toggleSaveMenu(false)">닫기</button>
   </div>
-  <div class="hint" id="autoBack"></div>
 </section>
 
 <!-- 설정 -->
@@ -975,14 +986,14 @@ async function submitAndGetNumber(copies = 1, forceRetry = false) {
   // 자동 인쇄 설정이 켜져 있으면 PC 자체 프린터로도 출력
   if (S.autoPrint) doDirectPrint();
 
-  // 자동 복귀 타이머 (30초 후 다음 촬영 화면으로)
+  // 자동 복귀 타이머 (30초 후 처음 화면으로 복귀)
   let left = 30;
   const hint = document.getElementById('autoBack');
-  hint.textContent = `${left}초 후 다시 촬영을 시작해요`;
+  hint.textContent = `⏱ ${left}초 후 처음 화면으로 돌아가요 (다음 팀은 바로 촬영 클릭)`;
   autoBackTimer = setInterval(() => {
     left--;
-    hint.textContent = `${left}초 후 다시 촬영을 시작해요`;
-    if (left <= 0) { clearInterval(autoBackTimer); startShoot(); }
+    hint.textContent = `⏱ ${left}초 후 처음 화면으로 돌아가요 (다음 팀은 바로 촬영 클릭)`;
+    if (left <= 0) { clearInterval(autoBackTimer); go('idle'); }
   }, 1000);
 }
 
