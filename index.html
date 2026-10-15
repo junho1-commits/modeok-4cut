@@ -118,24 +118,41 @@
   @keyframes timerPulse { to { transform: scale(1.06); } }
 
   /* 결과 */
-  .result-main { display: flex; align-items: center; gap: 36px; }
-  #resultImg { height: 58vh; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
-  #qrBox { display: flex; flex-direction: column; align-items: center; gap: 10px; background: #fff; padding: 18px 22px; border-radius: 18px; box-shadow: 0 8px 28px rgba(0,0,0,.08); width: 260px; }
-  #qrBox[hidden] { display: none; }
-  .qr-title { font-size: 21px; font-weight: 700; color: var(--accent-dark); white-space: nowrap; }
-  #qrImg { width: 200px; height: 200px; image-rendering: pixelated; background: #f3f3f3; border-radius: 8px; }
+  .result-main { display: flex; align-items: center; justify-content: center; gap: 32px; max-width: 1280px; margin: 0 auto; }
+  #resultImg { height: 60vh; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+  .result-side { width: 380px; display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
+  .info-card { background: #fff; border-radius: 18px; padding: 16px 20px; box-shadow: 0 8px 28px rgba(0,0,0,.08); text-align: center; }
+  .info-card[hidden] { display: none; }
+
+  #copyAsk { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .ask-title { margin: 0; font-size: 23px; color: var(--accent-dark); font-weight: 800; }
+  .ask-sub { margin: 0; font-size: 15px; color: var(--muted); }
+  .copies { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; margin-top: 4px; }
+  .copies .btn { font-size: 22px; font-weight: 800; padding: 14px 0; border-radius: 12px; }
+
+  #waitBox { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 26px 16px; }
+  .spinner { width: 40px; height: 40px; margin: 0 auto 12px; border-radius: 50%; border: 5px solid #ffd6e0; border-top-color: var(--accent); animation: spin .9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .number-card { background: linear-gradient(145deg, #fff, #fff8fa); border: 2px solid #ffd6e0; }
+  .num-header { font-size: 15px; font-weight: 700; color: #888; letter-spacing: 1px; }
+  .big-number { font-size: 82px; font-weight: 900; line-height: 1; color: var(--accent); margin: 6px 0; letter-spacing: -2px; }
+  .num-guide { font-size: 17px; font-weight: 700; color: var(--fg); background: #fff; padding: 9px 12px; border-radius: 12px; border: 1px solid #ffd6e0; }
+  .num-guide b { color: var(--accent-dark); }
+  .num-filename { font-size: 12px; color: #888; margin-top: 6px; word-break: break-all; }
+
+  .qr-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 16px; }
+  .qr-title { font-size: 16px; font-weight: 700; color: var(--accent-dark); }
+  #qrImg { width: 140px; height: 140px; image-rendering: pixelated; background: #f3f3f3; border-radius: 8px; }
   #qrImg.loading { animation: qrPulse 1s infinite alternate; }
   @keyframes qrPulse { to { opacity: .35; } }
-  #qrStatus { font-size: 16px; color: var(--muted); text-align: center; min-height: 22px; }
+  #qrStatus { font-size: 14px; color: var(--muted); text-align: center; min-height: 20px; }
   #qrStatus.err { color: #d9435f; }
-  #printing { font-size: 24px; color: var(--accent-dark); min-height: 30px; }
+  #printing { font-size: 20px; color: var(--accent-dark); min-height: 26px; }
   #saveMenu { padding: 10px 16px; background: #fff; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.12); }
   #saveMenu[hidden] { display: none; }
   #saveMenu .btn { line-height: 1.25; }
   #saveMenu small { font-size: 13px; font-weight: 500; opacity: .8; }
-  #copyAsk { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-  #copyAsk[hidden] { display: none; }
-  .copies .btn { font-size: 26px; padding: 14px 34px; }
 
   /* 설정 */
   #settings { position: absolute; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 50; }
@@ -186,8 +203,9 @@
   </div>
   <div class="row">
     <button class="btn" onclick="startBooth()">▶ 부스 시작</button>
-    <button class="btn secondary small" onclick="openSettings()">고급 설정 (카메라·프린터·QR)</button>
+    <button class="btn secondary small" onclick="openSettings()">고급 설정 (카메라·프린터·드라이브)</button>
   </div>
+  <div id="setupDriveStatus" class="hint" style="font-size:15px;color:#2b7c43;font-weight:700;margin-top:-6px">☁ 구글 드라이브: 연결 확인 중…</div>
   <div class="hint">Enter: 부스 시작 · 부스 진행 중 Esc: 이 화면으로 돌아오기</div>
 </section>
 
@@ -261,33 +279,61 @@
 <!-- 6. 결과 / 인쇄 매수 선택 -->
 <section id="result" class="screen">
   <div class="result-main">
-    <img id="resultImg" alt="결과">
-    <div id="qrBox" hidden>
-      <div class="qr-title">📱 휴대폰으로 가져가기</div>
-      <img id="qrImg" alt="QR 코드">
-      <div id="qrStatus"></div>
+    <img id="resultImg" alt="결과 사진">
+
+    <div class="result-side">
+      <!-- 1. 매수 선택 -->
+      <div id="copyAsk" class="info-card">
+        <h3 class="ask-title">🖨 몇 장 인쇄할까요?</h3>
+        <p class="ask-sub">장수를 누르면 사진 번호가 발급돼요</p>
+        <div class="copies">
+          <button class="btn" onclick="submitAndGetNumber(1)">1장</button>
+          <button class="btn" onclick="submitAndGetNumber(2)">2장</button>
+          <button class="btn" onclick="submitAndGetNumber(3)">3장</button>
+          <button class="btn" onclick="submitAndGetNumber(4)">4장</button>
+        </div>
+        <small class="hint" style="margin-top:4px">키보드 1~4 숫자키 또는 Enter</small>
+      </div>
+
+      <!-- 2. 대기 화면 -->
+      <div id="waitBox" class="info-card" hidden>
+        <div class="spinner"></div>
+        <b style="font-size:20px;color:var(--accent-dark)">구글 드라이브에 저장 중…</b>
+        <p style="margin:8px 0 0;font-size:14px;color:#666">사진 번호를 받고 있어요. 잠시만 기다려주세요</p>
+      </div>
+
+      <!-- 3. 사진 번호 발급 완료 -->
+      <div id="numberBox" class="info-card number-card" hidden>
+        <div class="num-header">내 사진 번호</div>
+        <div class="big-number" id="photoNumber">01번</div>
+        <div class="num-guide" id="photoGuide">출력하는 곳에 가서 <b>"1번 1장 주세요"</b>라고 말하세요!</div>
+        <div class="num-filename" id="savedName">드라이브: 1015-001_1장.jpg</div>
+      </div>
+
+      <!-- 4. 스마트폰용 QR 코드 -->
+      <div id="qrBox" class="info-card qr-card" hidden>
+        <div class="qr-title">📱 스마트폰으로 사진 받기</div>
+        <img id="qrImg" alt="QR 코드">
+        <div id="qrStatus">카메라로 QR을 찍으면 사진이 열려요</div>
+        <button id="qrRetryBtn" class="btn small secondary" onclick="submitAndGetNumber(currentCopies, true)" hidden>🔄 드라이브 다시 저장</button>
+      </div>
     </div>
   </div>
+
   <div id="printing"></div>
-  <div id="copyAsk">
-    <p class="sub">🖨 몇 장 인쇄할까요?</p>
-    <div class="row copies">
-      <button class="btn" onclick="doPrint(1)">1장</button>
-      <button class="btn" onclick="doPrint(2)">2장</button>
-      <button class="btn" onclick="doPrint(3)">3장</button>
-      <button class="btn" onclick="doPrint(4)">4장</button>
-    </div>
-  </div>
-  <div class="row">
-    <button class="btn secondary small" onclick="toggleSaveMenu()">💾 저장</button>
-    <button class="btn secondary small" id="nextTeamBtn" onclick="startShoot()">인쇄 없이 다시 찍기</button>
+
+  <div class="row" style="margin-top:16px">
+    <button class="btn" id="nextTeamBtn" onclick="startShoot()">다음 친구 준비 완료 →</button>
+    <button class="btn secondary small" id="directPrintBtn" onclick="doDirectPrint()" title="이 PC에 연결된 프린터로 바로 인쇄">🖨 이 PC에서 바로 인쇄</button>
+    <button class="btn secondary small" onclick="toggleSaveMenu()">💾 파일 저장</button>
     <button class="btn secondary small" onclick="go('idle')">행사 세팅으로</button>
   </div>
   <div id="saveMenu" class="row" hidden>
-    <span class="sub">어떤 프린터용으로 저장할까요?</span>
+    <span class="sub">어떤 형식으로 저장할까요?</span>
     <button class="btn small" onclick="saveImage('selphy')">캐논 셀피용<br><small>100×148mm · 1181×1748</small></button>
-    <button class="btn small" onclick="saveImage('kodak')">코닥 4×6용<br><small>102×152mm · 1200×1800 (휴대폰 → 코닥 앱)</small></button>
-    <button class="btn secondary small" onclick="toggleSaveMenu(false)">취소</button>
+    <button class="btn small" onclick="saveImage('kodak')">코닥 4×6용<br><small>102×152mm · 1200×1800</small></button>
+    <button class="btn small secondary" id="driveLinkBtn" onclick="openDriveLink()" hidden>☁ 드라이브 사진 열기<br><small>웹에서 보기</small></button>
+    <button class="btn secondary small" onclick="toggleSaveMenu(false)">닫기</button>
   </div>
   <div class="hint" id="autoBack"></div>
 </section>
@@ -307,8 +353,8 @@
     </select></label>
     <label>사용자 프레임 PNG<br><small>(1181×1748, 사진 자리는 투명)</small> <input id="setFramePng" type="file" accept="image/png"></label>
     <label>사용자 프레임 지우기 <button class="btn small secondary" onclick="clearCustomFrame()">지우기</button></label>
-    <label>QR 업로드 주소<br><small>(Apps Script 웹앱 URL, qr-server/설치방법.md)</small> <input id="setQrUrl" placeholder="https://script.google.com/macros/s/…/exec"></label>
-    <label>QR 연결 확인 <span><button class="btn small secondary" onclick="testQrUrl()">연결 확인</button> <span id="qrTestMsg"></span></span></label>
+    <label>구글 드라이브 저장 / QR 주소<br><small>(완성 사진이 학교 Google Drive '네컷사진' 폴더에 자동 저장돼요)</small> <input id="setQrUrl" placeholder="https://script.google.com/macros/s/…/exec"></label>
+    <label>드라이브 연결 확인 <span><button class="btn small secondary" onclick="testQrUrl()">연결 확인</button> <span id="qrTestMsg"></span></span></label>
     <div class="row" style="margin-top:16px">
       <button class="btn small" onclick="saveSettings()">저장</button>
       <button class="btn small secondary" onclick="closeSettings()">닫기</button>
@@ -322,13 +368,13 @@
 
 const DEFAULTS = {
   title: '모덕초등학교', footer: '', countdown: 6,
-  mirror: true, autoPrint: false, showDate: true, camId: '', paper: 'selphy', ver: 2,
+  mirror: true, autoPrint: false, showDate: true, camId: '', paper: 'selphy', ver: 4,
   // 행사 세팅 화면(첫 화면)에서 정하는 값
   titleFont: 0,        // 인쇄물 학교/행사 이름 글꼴 (STICKER_FONTS 순서, 0 = 주아체)
   shots: 4,            // 촬영 장수 4 / 6 / 8
   frameId: '',         // 프레임 고정 ('' = 학생이 직접 고름)
   decoTheme: '졸업',   // 꾸미기에서 처음 보이는 스티커 묶음
-  // Apps Script 웹앱 URL (qr-server/ 참고). 설정에서 바꿀 수 있고, 비우면 QR 기능 꺼짐
+  // Apps Script 웹앱 URL (qr-server/ 참고). 설정에서 바꿀 수 있고, 비우면 구글 드라이브 저장 및 QR 기능 꺼짐
   qrUrl: 'https://script.google.com/macros/s/AKfycbw161azvmXkXPJRtBfTclq9ZR34adGaql_0JJDuVpyAOFVzyJ2xj0syJiWV1FBvaakL/exec',
 };
 const DECO_SECONDS = 60;   // 꾸미기 제한 시간
@@ -340,8 +386,20 @@ const store = {
 };
 let S = Object.assign({}, DEFAULTS, JSON.parse(store.get('booth.settings') || '{}'));
 if (!(S.ver >= 2)) { S.countdown = DEFAULTS.countdown; S.ver = 2; }   // 예전 저장값(3초) → 6초로 한 번만 갱신
-if (!(S.ver >= 3)) { if (!S.qrUrl) S.qrUrl = DEFAULTS.qrUrl; S.ver = 3; }   // QR 주소가 비어 있던 저장값 → 기본 주소 채움
-if (S.qrUrl && S.qrUrl.includes('AKfycbxR9QIIfbfP4c2pakyOtAcaucuSNNj5D-hFw7sHzTRZ1PfTS1q_y8J2jkdAmOHiOdeZ')) S.qrUrl = DEFAULTS.qrUrl;   // 옛 Apps Script 주소가 저장돼 있으면 새 주소로
+// 구글 드라이브 업로드 주소: 비어있거나 구버전 주소이면 기본값으로 복구
+if (!S.qrUrl || typeof S.qrUrl !== 'string' || !S.qrUrl.trim() || S.qrUrl.includes('AKfycbxR9QIIfbfP4c2pakyOtAcaucuSNNj5D-hFw7sHzTRZ1PfTS1q_y8J2jkdAmOHiOdeZ')) {
+  S.qrUrl = DEFAULTS.qrUrl;
+}
+S.ver = 4;
+
+// PC 부스 전용 오늘 사진 순번 (001, 002…)
+function pcNumber() {
+  const day = new Date().toISOString().slice(0, 10);
+  if (S.pcSeqDay !== day) { S.pcSeqDay = day; S.pcSeq = 0; }
+  S.pcSeq = (S.pcSeq || 0) + 1;
+  store.set('booth.settings', JSON.stringify(S));
+  return S.pcSeq;
+}
 // 인화지 종류 — 캔버스(1181×1748, 100×148 비율)는 그대로 두고 인쇄 크기만 바꿈 (4×6 은 비율 차이 0.7% 라 티 안 남)
 const PAPERS = {
   selphy:  { w: 100, h: 148, name: '캐논 셀피 100×148mm' },
@@ -382,7 +440,7 @@ function go(id) {
   clearInterval(autoBackTimer);
   clearInterval(decoTimer); decoTimer = null;
   if (id !== 'shoot') { shootSeq++; if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } }   // 촬영 도중 빠져나가면 촬영 루프·카메라 종료
-  if (id === 'idle') { shots = []; picked = []; stickers = []; selStk = -1; fillSetup(); renderSetupPreview(); }
+  if (id === 'idle') { shots = []; picked = []; stickers = []; selStk = -1; fillSetup(); renderSetupPreview(); checkSetupDriveStatus(); }
   if (id === 'frame') renderFrames();
 }
 /* 흐름: 행사 세팅(부스 시작) → 촬영 → (6·8장) 사진 선택 → 프레임(고정이면 건너뜀) → 꾸미기 → 인쇄 → 다시 촬영 … (Esc 로 세팅 화면) */
@@ -769,19 +827,33 @@ function stkClear() { stickers = []; selStk = -1; redrawDeco(); }
 })();
 
 /* ---------- 합성 ---------- */
+/* ---------- 합성 ---------- */
+let currentCopies = 1;
+let submitToken = '';
+
+function newUploadToken() {
+  return (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2));
+}
+
 function compose() {
   const photos = picked.map(i => shots[i]);
   const page = makePageCanvas(selectedFrame, photos, { stickers, highlight: -1 });
-  resultDataUrl = page.toDataURL('image/jpeg', 0.95);   // 저장·QR 업로드용 (용량 절약)
+  resultDataUrl = page.toDataURL('image/jpeg', 0.95);   // 저장·드라이브 업로드용 (용량 절약)
   printDataUrl = page.toDataURL('image/png');            // 인쇄용은 압축 손실 없는 PNG
   document.getElementById('resultImg').src = resultDataUrl;
   document.getElementById('printing').textContent = '';
   document.getElementById('copyAsk').hidden = false;
+  document.getElementById('waitBox').hidden = true;
+  document.getElementById('numberBox').hidden = true;
+  document.getElementById('qrBox').hidden = true;
   toggleSaveMenu(false);
-  document.getElementById('nextTeamBtn').textContent = '인쇄 없이 다시 찍기';
+  document.getElementById('nextTeamBtn').textContent = '다음 친구 준비 완료 →';
+  submitToken = '';
+  driveUrl = null;
   go('result');
-  uploadForQr();   // 인터넷이 있으면 Drive 에 올리고 QR 표시 (실패해도 인쇄 흐름은 계속)
-  if (S.autoPrint) { doPrint(1); return; }   // 자동 인쇄 설정이 켜져 있으면 묻지 않고 1장
+
+  if (S.autoPrint) { submitAndGetNumber(1); return; }   // 자동 인쇄 설정이 켜져 있으면 묻지 않고 1장 제출
+
   let left = 60;
   const hint = document.getElementById('autoBack');
   hint.textContent = `${left}초 후 처음 화면으로 돌아가요`;
@@ -791,71 +863,157 @@ function compose() {
   }, 1000);
 }
 
-/* ---------- 인쇄 / 저장 ---------- */
-function doPrint(copies = 1) {
+/* ---------- Google Drive 저장 및 사진 번호 발급 ---------- */
+let qrSeq = 0;
+let driveUrl = null;
+
+// 응답이 끊겼어도 구글 서버엔 이미 저장됐을 수 있으니 결과 확인
+async function checkDriveStatus(token, tries) {
+  for (let i = 0; i < tries; i++) {
+    await sleep(3000);
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 10000);
+      const res = await fetch(S.qrUrl + '?action=status&token=' + token + '&t=' + Date.now(), { signal: ctrl.signal, cache: 'no-store' });
+      clearTimeout(t);
+      const j = await res.json();
+      if (j && j.ok && (j.name || j.number || j.url)) return j;
+    } catch (e) {}
+  }
+  return null;
+}
+
+async function submitAndGetNumber(copies = 1, forceRetry = false) {
   if (!resultDataUrl) return;
   copies = Math.max(1, Math.min(4, copies | 0));
+  currentCopies = copies;
   clearInterval(autoBackTimer);
+
+  const seq = ++qrSeq;
   document.getElementById('copyAsk').hidden = true;
-  // 매수만큼 페이지를 만들어 한 번의 인쇄 작업으로 보냄
-  const area = document.getElementById('printArea');
-  area.innerHTML = '';
-  for (let i = 0; i < copies; i++) {
-    const im = document.createElement('img'); im.src = printDataUrl || resultDataUrl; im.alt = ''; area.appendChild(im);
+  document.getElementById('waitBox').hidden = false;
+  document.getElementById('numberBox').hidden = true;
+  document.getElementById('qrBox').hidden = true;
+
+  if (!submitToken || !forceRetry) submitToken = newUploadToken();
+
+  const d = new Date();
+  const mmdd = String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  const fallbackNo = pcNumber();
+  const payload = JSON.stringify({
+    image: resultDataUrl,
+    submit: true,          // Apps Script 가 오늘 날짜 사진 번호를 매기도록 요청
+    copies: copies,        // 학생이 선택한 매수
+    token: submitToken,    // 재전송 시 중복 방지용 토큰
+    name: `${mmdd}-${String(fallbackNo).padStart(3, '0')}_${copies}장`
+  });
+
+  let j = null;
+  if (S.qrUrl) {
+    for (let attempt = 0; attempt < 2 && !j; attempt++) {
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 45000);
+        const res = await fetch(S.qrUrl, {
+          method: 'POST', signal: ctrl.signal,
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: payload,
+        });
+        clearTimeout(timer);
+        j = await res.json();
+        if (j && !j.ok) j = null;
+      } catch (e) {
+        if (seq !== qrSeq) return;
+        j = await checkDriveStatus(submitToken, 2);
+      }
+    }
   }
-  const msg = document.getElementById('printing');
-  msg.textContent = `🖨 ${copies}장 인쇄 중이에요… (약 ${copies}분 걸려요)`;
-  document.getElementById('autoBack').textContent = '';
-  setTimeout(() => window.print(), 150);
-  setTimeout(() => { msg.textContent = `${copies}장 인쇄가 시작됐어요! 다음 친구 준비~`; }, 3000);
-  // 인쇄를 보낸 뒤 촬영 화면(2번)으로 돌아가 다음 팀이 바로 찍을 수 있게 함
-  // QR 이 켜져 있으면 휴대폰으로 찍을 시간을 주기 위해 더 길게 기다림 ("다음 친구" 버튼으로 바로 넘어갈 수도 있음)
-  let left = S.qrUrl ? 30 : 8;
-  document.getElementById('nextTeamBtn').textContent = '다음 친구 →';
+
+  if (seq !== qrSeq) return;
+  document.getElementById('waitBox').hidden = true;
+
+  let number = null;
+  let savedName = '';
+  if (j && j.ok) {
+    const m = /-(\d{3})_/.exec(j.name || '');
+    number = j.number || (m ? +m[1] : null);
+    savedName = j.name || `${mmdd}-${String(fallbackNo).padStart(3, '0')}_${copies}장.jpg`;
+    if (j.url) driveUrl = j.url;
+  } else {
+    number = fallbackNo;
+    savedName = `${mmdd}-${String(fallbackNo).padStart(3, '0')}_${copies}장.jpg (오프라인)`;
+  }
+
+  const numStr = String(number).padStart(2, '0') + '번';
+  document.getElementById('photoNumber').textContent = numStr;
+  document.getElementById('photoGuide').innerHTML = `출력하는 곳에 가서 <b>"${numStr} ${copies}장 주세요"</b>라고 말하세요! 🖨`;
+  document.getElementById('savedName').textContent = '드라이브 파일: ' + savedName;
+  document.getElementById('numberBox').hidden = false;
+
+  // QR 코드 상자
+  const qrBox = document.getElementById('qrBox');
+  const qrImg = document.getElementById('qrImg');
+  const qrStatus = document.getElementById('qrStatus');
+  const qrRetryBtn = document.getElementById('qrRetryBtn');
+  const driveBtn = document.getElementById('driveLinkBtn');
+
+  qrBox.hidden = false;
+  if (driveUrl) {
+    qrImg.src = makeQrDataUrl(driveUrl);
+    qrImg.classList.remove('loading');
+    qrStatus.className = '';
+    qrStatus.textContent = '카메라로 QR을 찍으면 사진이 열려요';
+    if (qrRetryBtn) qrRetryBtn.hidden = true;
+    if (driveBtn) driveBtn.hidden = false;
+  } else {
+    qrImg.classList.remove('loading');
+    qrStatus.className = 'err';
+    qrStatus.textContent = '드라이브 업로드 실패 (인터넷 확인)';
+    if (qrRetryBtn) qrRetryBtn.hidden = false;
+  }
+
+  // 자동 인쇄 설정이 켜져 있으면 PC 자체 프린터로도 출력
+  if (S.autoPrint) doDirectPrint();
+
+  // 자동 복귀 타이머 (30초 후 다음 촬영 화면으로)
+  let left = 30;
   const hint = document.getElementById('autoBack');
   hint.textContent = `${left}초 후 다시 촬영을 시작해요`;
   autoBackTimer = setInterval(() => {
-    left--; hint.textContent = `${left}초 후 다시 촬영을 시작해요`;
+    left--;
+    hint.textContent = `${left}초 후 다시 촬영을 시작해요`;
     if (left <= 0) { clearInterval(autoBackTimer); startShoot(); }
   }, 1000);
 }
 
-/* ---------- QR 전달 (Google Drive + Apps Script, qr-server/ 참고) ---------- */
-let qrSeq = 0;
-async function uploadForQr() {
-  const box = document.getElementById('qrBox');
-  if (!S.qrUrl) { box.hidden = true; return; }
-  const seq = ++qrSeq;   // 다음 사진으로 넘어간 뒤 늦게 도착한 응답은 무시
-  const img = document.getElementById('qrImg'), st = document.getElementById('qrStatus');
-  box.hidden = false; img.src = ''; img.classList.add('loading'); st.className = ''; st.textContent = '사진을 올리는 중…';
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 25000);
-  try {
-    const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-    const res = await fetch(S.qrUrl, {
-      method: 'POST', signal: ctrl.signal,
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // text/plain 이어야 브라우저가 사전 요청(preflight) 없이 보냄
-      body: JSON.stringify({ image: resultDataUrl, name: `4cut_${stamp}` }),
-    });
-    const j = await res.json();
-    if (!j.ok || !j.url) throw new Error(j.error || '응답에 주소가 없어요');
-    if (seq !== qrSeq) return;
-    img.src = makeQrDataUrl(j.url);
-    img.classList.remove('loading');
-    st.textContent = '카메라로 QR 을 찍으면 사진이 열려요';
-  } catch (e) {
-    if (seq !== qrSeq) return;
-    img.classList.remove('loading');
-    st.className = 'err';
-    st.textContent = e.name === 'AbortError' ? '업로드 시간 초과 — 인쇄는 가능해요' : '업로드 실패 — 인쇄는 가능해요';
-    console.warn('QR 업로드 실패', e);
-  } finally { clearTimeout(timer); }
+// 이 PC에서 바로 인쇄하기 (PC 자체 프린터 사용 시)
+function doDirectPrint() {
+  if (!resultDataUrl) return;
+  const area = document.getElementById('printArea');
+  area.innerHTML = '';
+  for (let i = 0; i < currentCopies; i++) {
+    const im = document.createElement('img'); im.src = printDataUrl || resultDataUrl; im.alt = ''; area.appendChild(im);
+  }
+  const msg = document.getElementById('printing');
+  msg.textContent = `🖨 ${currentCopies}장 인쇄 중이에요…`;
+  setTimeout(() => window.print(), 150);
 }
+
+// 호환성용 alias
+function uploadForQr(force) { return submitAndGetNumber(currentCopies, force); }
+function doPrint(copies) { return submitAndGetNumber(copies); }
+
+function openDriveLink() {
+  if (driveUrl) window.open(driveUrl, '_blank');
+  else if (S.qrUrl) submitAndGetNumber(currentCopies, true);
+}
+
 function makeQrDataUrl(text) {
   const q = qrcode(0, 'M');   // 0 = 크기 자동
   q.addData(text); q.make();
   return q.createDataURL(8, 2);   // 모듈 8px, 여백 2모듈
 }
+
 async function testQrUrl() {
   const url = document.getElementById('setQrUrl').value.trim();
   const msg = document.getElementById('qrTestMsg');
@@ -865,6 +1023,35 @@ async function testQrUrl() {
     const j = await (await fetch(url, { method: 'GET' })).json();
     msg.textContent = j.ok ? `연결 성공 (폴더: ${j.folder})` : '응답이 이상해요: ' + JSON.stringify(j);
   } catch (e) { msg.textContent = '연결 실패 — 주소와 배포 설정(모든 사용자)을 확인하세요'; }
+}
+
+async function checkSetupDriveStatus() {
+  const el = document.getElementById('setupDriveStatus');
+  if (!el) return;
+  if (!S.qrUrl) {
+    el.textContent = '☁ 구글 드라이브: ❌ 주소 미설정 (고급 설정에서 입력)';
+    el.style.color = '#c23b56';
+    return;
+  }
+  el.textContent = '☁ 구글 드라이브: 연결 확인 중…';
+  el.style.color = '#666';
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(S.qrUrl + '?ping=' + Date.now(), { signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(t);
+    const j = await res.json();
+    if (j && j.ok) {
+      el.textContent = `☁ 구글 드라이브: ✅ 연결됨 ('${j.folder || '네컷사진'}' 폴더에 자동 저장)`;
+      el.style.color = '#2b7c43';
+    } else {
+      el.textContent = '☁ 구글 드라이브: ❌ 응답 이상 (설정 확인)';
+      el.style.color = '#c23b56';
+    }
+  } catch (e) {
+    el.textContent = '☁ 구글 드라이브: ❌ 연결 안 됨 (인터넷 확인)';
+    el.style.color = '#c23b56';
+  }
 }
 function toggleSaveMenu(show) {
   const m = document.getElementById('saveMenu');
@@ -945,7 +1132,7 @@ function saveSettings() {
   S.paper = document.getElementById('setPaper').value;
   S.qrUrl = document.getElementById('setQrUrl').value.trim();
   store.set('booth.settings', JSON.stringify(S));
-  applyTitle(); applyPaper();
+  applyTitle(); applyPaper(); checkSetupDriveStatus();
   closeSettings();
 }
 document.getElementById('setFramePng').addEventListener('change', e => {
@@ -971,15 +1158,18 @@ document.addEventListener('keydown', e => {
     else if (cur === 'pick' && picked.length === 4) goFrame();
     else if (cur === 'frame') goDeco();
     else if (cur === 'deco') compose();
-    else if (cur === 'result' && !document.getElementById('copyAsk').hidden) doPrint(1);
+    else if (cur === 'result') {
+      if (!document.getElementById('copyAsk').hidden) submitAndGetNumber(1);
+      else if (!document.getElementById('numberBox').hidden) startShoot();
+    }
   }
-  if (cur === 'result' && /^[1-4]$/.test(e.key) && !document.getElementById('copyAsk').hidden) doPrint(+e.key);
+  if (cur === 'result' && /^[1-4]$/.test(e.key) && !document.getElementById('copyAsk').hidden) submitAndGetNumber(+e.key);
   if (e.key === 'Delete' && cur === 'deco') stkDelete();
   if (e.key === 'Escape') go('idle');
   if (e.key.toLowerCase() === 's' && cur !== 'shoot') openSettings();
 });
 
-applyTitle(); applyPaper(); fillSetup(); renderSetupPreview();
+applyTitle(); applyPaper(); fillSetup(); renderSetupPreview(); checkSetupDriveStatus();
 </script>
 </body>
 </html>

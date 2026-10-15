@@ -73,6 +73,9 @@ const run = code=>vm.runInContext(code,sandbox);
   run("go('idle'); document.getElementById('setupFrame').value=''; setupChanged()");
   await run('goFrame()');
   assert.ok(elements.get('frame').classList.contains('active'),'Student choice must show the frame screen');
+  assert.ok(run('S.qrUrl'), 'QR/Drive URL must not be empty');
+  assert.equal(run('pcNumber()'), 1, 'pcNumber must return sequential numbers');
+  assert.equal(run('pcNumber()'), 2);
   for(const file of fs.readdirSync(path.join(root,'assets/fonts')).filter(f=>f.endsWith('.ttf'))) {
     assert.equal(fs.readFileSync(path.join(root,'assets/fonts',file)).readUInt32BE(0),65536,'Valid TrueType signature');
   }
